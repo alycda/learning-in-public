@@ -2,6 +2,12 @@
 name = "day-01"
 edition = "2024"
 
+[features]
+ffi_c = []
+
+[build-dependencies]
+cc = "1"
+
 [dependencies]
 
 [dev-dependencies]

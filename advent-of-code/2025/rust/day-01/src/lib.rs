@@ -79,7 +79,15 @@ impl Dial {
                     Elf::Regina(distance) => { position += distance as i32; },
                 }
 
-                position = position.rem_euclid(100);
+                #[cfg(not(feature = "ffi_c"))] 
+                {
+                    position = position.rem_euclid(100);
+                }
+
+                #[cfg(feature = "ffi_c")]
+                unsafe {
+                    position = ffi::rem_euclid(position, 100)
+                }
 
                 if position == 0 { zeros += 1 }
 
@@ -140,6 +148,42 @@ pub fn part2(input: &str) -> Result<String, String> {
     });
 
     Ok(zeros.to_string())
+}
+
+#[cfg(feature = "ffi_c")]
+pub mod ffi {
+    // use super::*;
+
+    /* 
+    error: linking with `cc` failed: exit status: 1                                                                                                                ▐                                         ▐
+   |                                                                                                                                                               ▐                                         ▐
+   = note:  "cc" "/private/tmp/nix-shell-85922-0/rustcrdrgGg/symbols.o" "<53 object files omitted>" "-lmath" "<sysroot>/lib/rustlib/aarch64-apple-darwin/lib/{libte▐                                         ▐
+ st-*,libgetopts-*,librustc_std_workspace_std-*,libstd-*,libpanic_unwind-*,libobject-*,libmemchr-*,libaddr2line-*,libgimli-*,libcfg_if-*,librustc_demangle-*,libstd▐                                         ▐
+ _detect-*,libhashbrown-*,librustc_std_workspace_alloc-*,libminiz_oxide-*,libadler2-*,libunwind-*,liblibc-*,librustc_std_workspace_core-*,liballoc-*,libcore-*,libc▐                                         ▐
+ ompiler_builtins-*}.rlib" "-lSystem" "-lc" "-lm" "-arch" "arm64" "-mmacosx-version-min=11.3.0" "-o" "/Users/alyssaevans/Work/learning-in-public/advent-of-code/202▐                                         ▐
+ 5/rust/target/debug/deps/day_01-d8a32a5b7a34b3ff" "-Wl,-dead_strip" "-nodefaultlibs"                                                                              ▐
+   = note: some arguments are omitted. use `--verbose` to show all linker arguments                                                                                ▐
+   = note: ld: library not found for -lmath
+           clang: error: linker command failed with exit code 1 (use -v to see invocation)
+    */ 
+    // #[link(name = "math")] 
+    // #[link(name = "m")] // Links with the compiled C library (libmath.a or libmath.so)
+    // https://doc.rust-lang.org/nomicon/ffi.html#calling-foreign-functions
+    // https://doc.rust-lang.org/nomicon/ffi.html#linking
+    unsafe extern "C" {
+        pub fn rem_euclid(a: i32, b: i32) -> i32;
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn ffi_part1() {
+            assert_eq!(unsafe { rem_euclid(101,100) }, 101_i32.rem_euclid(100));
+            assert_eq!(unsafe { rem_euclid(201,100) }, 201_i32.rem_euclid(100));
+        }
+    }
 }
 
 #[cfg(test)]

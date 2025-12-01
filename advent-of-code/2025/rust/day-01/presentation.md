@@ -68,3 +68,13 @@ Part 2
 ===
 
 lands on and crosses 0
+
+<!-- end_slide -->
+
+Pure Rust
+===
+
+<!-- end_slide -->
+
+C -> Rust
+===
