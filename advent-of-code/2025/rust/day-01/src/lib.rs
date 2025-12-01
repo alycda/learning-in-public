@@ -1,13 +1,24 @@
 use std::{num::{NonZeroI32, NonZeroU32, TryFromIntError}};
 
+type Rotations = Vec<Elf>;
+type Solution = NonZeroU32;
+/// part1, part2
+type Solutions = (NonZeroU32, NonZeroU32);
+
 /// position, zero_crossings
-pub struct Dial(i32, NonZeroU32);
+pub struct Dial(i32, u32);
 
 impl std::ops::Deref for Dial {
     type Target = i32;
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl Default for Dial {
+    fn default() -> Self {
+        Self(50, u32::default())
     }
 }
 
@@ -39,7 +50,15 @@ impl From<&'static str> for Elf {
 }
 
 impl Dial {
-    fn parse(input: &'static str) -> Vec<Elf> {
+    fn current_position(&self) -> u32 {
+        **self as u32
+    }
+
+    fn zero_crossings(&self) -> u32 {
+        self.1
+    }
+
+    fn parse(input: &'static str) -> Rotations {
         input.lines().fold(vec![], |mut elves, line| {
 
             elves.push(Elf::from(line));
@@ -49,7 +68,7 @@ impl Dial {
     }
 
     /// The actual password is the number of times the dial is left pointing at 0 after any rotation in the sequence
-    pub fn part1(input: &'static str) -> Result<NonZeroU32, TryFromIntError> {
+    pub fn part1(input: &'static str) -> Result<Solution, TryFromIntError> {
         let mut zeros = 0;
 
         Self::parse(input)
@@ -70,7 +89,22 @@ impl Dial {
         NonZeroI32::new(zeros).unwrap().try_into()
     }
 
-    fn part2() -> NonZeroU32 {
+    /// -> (part1, part2)
+    fn spin(&mut self, elves: Rotations) -> Solutions {
+        let mut lands_on_zeros = 0;
+        let mut crosses_zeros = 0;
+
+        elves.into_iter().for_each(|elf| {
+            todo!();
+
+            **self = 1000;
+        });
+        
+        // todo: itertools::collect_tuple()
+        (NonZeroI32::new(lands_on_zeros).unwrap().try_into().unwrap(), NonZeroI32::new(crosses_zeros).unwrap().try_into().unwrap())
+    }
+
+    fn part2() -> Solution {
         todo!()
     }
 }
@@ -126,10 +160,12 @@ L82";
     #[test]
     fn test_part1() {
         assert_eq!(Dial::part1(INPUT), Ok(NonZeroU32::new(3).unwrap()));
+        // assert_eq!(Dial::default().spin(Dial::parse(INPUT)).zero_crossings());
     }
 
     #[test]
     fn test_part2() {
         assert_eq!(part2(INPUT).unwrap(), "6".to_string());
+        // assert_eq!(Dial::part2(INPUT), Ok(NonZeroU32::new(6).unwrap()));
     }
 }
