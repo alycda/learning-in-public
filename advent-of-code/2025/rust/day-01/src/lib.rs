@@ -139,7 +139,17 @@ pub fn part2(input: &str) -> Result<String, String> {
                     0
                 };
 
-                start = (start - distance).rem_euclid(100);
+                #[cfg(not(feature = "ffi_c"))] 
+                {
+                    start = (start - distance).rem_euclid(100);
+                }
+
+                #[cfg(feature = "ffi_c")]
+                unsafe {
+                    let rust_rem_euclid = (start - distance).rem_euclid(100);
+                    start = ffi::euclidean_remainder((start - distance), 100);
+                    assert_eq!(start, rust_rem_euclid);
+                }
             },
             'R' => {  
                 zeros += (start + distance) / 100;
@@ -161,11 +171,15 @@ pub mod ffi {
     #[cfg(test)]
     mod tests {
         use super::*;
+        use rstest::rstest;
 
-        #[test]
-        fn ffi_part1() {
-            assert_eq!(unsafe { euclidean_remainder(101,100) }, 101_i32.rem_euclid(100));
-            assert_eq!(unsafe { euclidean_remainder(201,100) }, 201_i32.rem_euclid(100));
+        #[rstest]
+        #[case(101, 1)]
+        #[case(201, 1)]
+        fn ffi_part1(#[case] input: i32,#[case] expected: i32) {
+            assert_eq!(unsafe { euclidean_remainder(input,100) }, expected);
+            // assert_eq!(unsafe { euclidean_remainder(101,100) }, 101_i32.rem_euclid(100));
+            // assert_eq!(unsafe { euclidean_remainder(201,100) }, 201_i32.rem_euclid(100));
         }
     }
 }
