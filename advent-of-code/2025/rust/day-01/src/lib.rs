@@ -1,25 +1,78 @@
-/// The actual password is the number of times the dial is left pointing at 0 after any rotation in the sequence
-pub fn part1(input: &str) -> Result<String, String> {
-    let mut start = 50_i32;
-    let mut zeros = 0;
+use std::{num::{NonZeroI32, NonZeroU32, TryFromIntError}};
 
-    input.lines().for_each(|line| {
+/// position, zero_crossings
+pub struct Dial(i32, NonZeroU32);
+
+impl std::ops::Deref for Dial {
+    type Target = i32;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl std::fmt::Display for Dial {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", **self)
+    }
+}
+
+enum Elf {
+    /// left -
+    Laverne(u32),
+    /// right +
+    Regina(u32),
+}
+
+impl From<&'static str> for Elf {
+    fn from(line: &str) -> Self {
         let mut chars = line.chars();
         let direction = chars.next().unwrap();
-        let distance = chars.collect::<String>().parse::<i32>().unwrap();
+        let distance = chars.collect::<String>().parse::<u32>().unwrap();
 
         match direction {
-            'L' => { start -= distance; },
-            'R' => { start += distance; },
+            'L' => { Self::Laverne(distance) },
+            'R' => { Self::Regina(distance) },
             _ => unreachable!()
         }
+    }
+}
 
-        start = start.rem_euclid(100);
+impl Dial {
+    fn parse(input: &'static str) -> Vec<Elf> {
+        input.lines().fold(vec![], |mut elves, line| {
 
-        if start == 0 { zeros += 1 }
-    });
+            elves.push(Elf::from(line));
 
-    Ok(zeros.to_string())
+            elves
+        })
+    }
+
+    /// The actual password is the number of times the dial is left pointing at 0 after any rotation in the sequence
+    pub fn part1(input: &'static str) -> Result<NonZeroU32, TryFromIntError> {
+        let mut zeros = 0;
+
+        Self::parse(input)
+            .into_iter()
+            .fold(50_i32, |mut position, elf| {
+                match elf {
+                    Elf::Laverne(distance) => { position -= distance as i32; },
+                    Elf::Regina(distance) => { position += distance as i32; },
+                }
+
+                position = position.rem_euclid(100);
+
+                if position == 0 { zeros += 1 }
+
+                position
+            });
+    
+        NonZeroI32::new(zeros).unwrap().try_into()
+    }
+
+    fn part2() -> NonZeroU32 {
+        todo!()
+    }
 }
 
 /// password method 0x434C49434B
@@ -59,9 +112,7 @@ pub fn part2(input: &str) -> Result<String, String> {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_part1() {
-        let input = "L68
+    const INPUT: &str = "L68
 L30
 R48
 L5
@@ -72,22 +123,13 @@ L99
 R14
 L82";
 
-        assert_eq!(part1(input).unwrap(), "3".to_string());
+    #[test]
+    fn test_part1() {
+        assert_eq!(Dial::part1(INPUT), Ok(NonZeroU32::new(3).unwrap()));
     }
 
     #[test]
     fn test_part2() {
-        let input = "L68
-L30
-R48
-L5
-R60
-L55
-L1
-L99
-R14
-L82";
-
-        assert_eq!(part2(input).unwrap(), "6".to_string());
+        assert_eq!(part2(INPUT).unwrap(), "6".to_string());
     }
 }

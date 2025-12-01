@@ -1,7 +1,7 @@
-use day_01::part1;
+use day_01::Dial;
 
 fn main() {
     let file = include_str!("../../input.txt");
-    let result = part1(file);
+    let result = Dial::part1(file);
     println!("{}", result.unwrap());
 }
