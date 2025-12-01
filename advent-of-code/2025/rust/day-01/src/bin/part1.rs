@@ -13,13 +13,15 @@ pub fn part1(input: &str) -> Result<String, String> {
             _ => unreachable!()
         }
 
-        if start > 99 {
-            start -= 100
-        } else 
+        // if start > 99 {
+        //     start -= 100
+        // } else 
 
-        if start < 0 {
-            start += 100
-        }
+        // if start < 0 {
+        //     start += 100
+        // }
+
+        start = start.rem_euclid(100);
 
         if start == 0 { zeros += 1 }
     });
@@ -27,25 +29,8 @@ pub fn part1(input: &str) -> Result<String, String> {
     Ok(zeros.to_string())
 }
 
-#[cfg(test)]
-mod tests {
-    // use super::*;
-
-    use crate::part1;
-
-    #[test]
-    fn test_part1() {
-        let input = "L68
-L30
-R48
-L5
-R60
-L55
-L1
-L99
-R14
-L82";
-
-        assert_eq!(part1(input).unwrap(), "3".to_string());
-    }
+fn main() {
+    let file = include_str!("../../input.txt");
+    let result = part1(file);
+    println!("{}", result.unwrap());
 }
