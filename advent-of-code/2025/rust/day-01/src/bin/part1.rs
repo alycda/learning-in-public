@@ -1,4 +1,4 @@
-pub fn part1(input: &str) -> Result<String, String> {
+fn part1(input: &str) -> Result<String, String> {
     let mut start = 50_i32;
     let mut zeros = 0;
 
@@ -12,14 +12,6 @@ pub fn part1(input: &str) -> Result<String, String> {
             'R' => { start += distance; },
             _ => unreachable!()
         }
-
-        // if start > 99 {
-        //     start -= 100
-        // } else 
-
-        // if start < 0 {
-        //     start += 100
-        // }
 
         start = start.rem_euclid(100);
 
