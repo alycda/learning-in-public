@@ -14,13 +14,7 @@ pub fn part1(input: &str) -> Result<String, String> {
             _ => unreachable!()
         }
 
-        if start > 99 {
-            start -= 100
-        } else 
-
-        if start < 0 {
-            start += 100
-        }
+        start = start.rem_euclid(100);
 
         if start == 0 { zeros += 1 }
     });
@@ -39,24 +33,23 @@ pub fn part2(input: &str) -> Result<String, String> {
         let distance = chars.collect::<String>().parse::<i32>().unwrap();
 
         match direction {
-            'L' => { start -= distance; },
-            'R' => { start += distance; },
+            'L' => { 
+                zeros += if start == 0 {
+                    distance / 100
+                } else if distance >= start {
+                    1 + (distance - start) / 100
+                } else {
+                    0
+                };
+
+                start = (start - distance).rem_euclid(100);
+            },
+            'R' => {  
+                zeros += (start + distance) / 100;
+                start = (start + distance) % 100;
+            },
             _ => unreachable!()
         }
-
-        // dbg!(&start);
-
-        while start < 0 {
-            start += 100;
-            dbg!(zeros += 1);
-        }
-
-        while start > 99 {
-            start -= 100;
-            dbg!(zeros += 1);
-        }
-
-        // if dbg!(start) == 0 { zeros += 1 }
     });
 
     Ok(zeros.to_string())

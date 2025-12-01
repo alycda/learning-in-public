@@ -1,5 +1,6 @@
 [package]
-name = "day_01"
+name = "day-01"
+edition = "2024"
 
 [dependencies]
 
