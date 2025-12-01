@@ -11,3 +11,4 @@ cc = "1"
 [dependencies]
 
 [dev-dependencies]
+rstest.workspace = true

@@ -5,3 +5,4 @@ default-members = ["day-*"]
 resolver = "3"
 
 [workspace.dependencies]
+rstest = "*"
