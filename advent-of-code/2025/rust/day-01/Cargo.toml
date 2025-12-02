@@ -9,6 +9,8 @@ ffi_c = []
 cc = "1"
 
 [dependencies]
+ditto = "0.2.0"
+serde_json = "1.0.145"
 
 [dev-dependencies]
 rstest.workspace = true
