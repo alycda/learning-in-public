@@ -155,8 +155,8 @@ impl Peer {
                     println!(
                         "[Peer {}] Merged state from Peer {}, now has part1: {} items, part2: {} items",
                         self.id, from_peer,
-                        self.part1_set.value().len(),
-                        self.part2_set.value().len()
+                        self.part1_set.local_value().len(),
+                        self.part2_set.local_value().len()
                     );
                     self.tx.send(PeerResponse::SyncComplete).unwrap();
                 }
@@ -164,8 +164,8 @@ impl Peer {
                     self.tx.send(PeerResponse::State { state: self.get_state() }).unwrap();
                 }
                 Ok(PeerMessage::GetResults) => {
-                    let part1_items: Vec<u128> = self.part1_set.value().iter().cloned().collect();
-                    let part2_items: Vec<u128> = self.part2_set.value().iter().cloned().collect();
+                    let part1_items: Vec<u128> = self.part1_set.local_value().iter().cloned().collect();
+                    let part2_items: Vec<u128> = self.part2_set.local_value().iter().cloned().collect();
 
                     self.tx.send(PeerResponse::Results {
                         part1_sum: part1_items.iter().sum(),
