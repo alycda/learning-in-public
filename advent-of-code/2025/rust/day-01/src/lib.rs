@@ -1,4 +1,4 @@
-use std::{num::{NonZeroI32, NonZeroU32, TryFromIntError}};
+use std::{num::{NonZeroI32, NonZeroU32, TryFromIntError}, str::FromStr};
 
 type Rotations = Vec<Elf>;
 type Solution = NonZeroU32;
@@ -35,15 +35,17 @@ enum Elf {
     Regina(u32),
 }
 
-impl From<&'static str> for Elf {
-    fn from(line: &str) -> Self {
+impl FromStr for Elf {
+    type Err = String;
+
+    fn from_str(line: &str) -> Result<Elf, String> {
         let mut chars = line.chars();
         let direction = chars.next().unwrap();
         let distance = chars.collect::<String>().parse::<u32>().unwrap();
 
         match direction {
-            'L' => { Self::Laverne(distance) },
-            'R' => { Self::Regina(distance) },
+            'L' => { Ok(Self::Laverne(distance)) },
+            'R' => { Ok(Self::Regina(distance)) },
             _ => unreachable!()
         }
     }
@@ -61,7 +63,7 @@ impl Dial {
     fn parse(input: &'static str) -> Rotations {
         input.lines().fold(vec![], |mut elves, line| {
 
-            elves.push(Elf::from(line));
+            elves.push(Elf::from_str(line).unwrap());
 
             elves
         })
