@@ -163,8 +163,11 @@ L82";
     println!();
 
     // Simulate distributed execution - alternating between sites
-    for (i, rotation) in rotations.iter().enumerate() {
-        let site = if i % 2 == 0 { 1 } else { 2 };
+    for rotation in rotations.iter() {
+        let site = match &rotation {
+            Rotation::Left(_) => { 1 },
+            Rotation::Right(_) => { 2 },
+        };
 
         let (ops, pos) = if site == 1 {
             let ops = dial1.rotate(*rotation);
