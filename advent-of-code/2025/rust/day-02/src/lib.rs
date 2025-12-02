@@ -1,5 +1,3 @@
-#![feature(unsigned_is_multiple_of)]
-
 pub fn part1(input: &str) -> String {
     let mut invalid_ids = vec![0];
 
