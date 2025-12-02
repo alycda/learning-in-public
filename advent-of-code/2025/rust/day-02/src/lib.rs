@@ -32,44 +32,6 @@ pub fn part1(input: &str) -> String {
     invalid_ids.iter().sum::<u64>().to_string()
 }
 
-// fn invalid_id(id: &str) -> bool {
-//     for i in 1..id.len() {
-//         if !id.len().is_multiple_of(i) {
-//             continue;
-//         }
-
-//         let substr = &id[..i];
-//         if id == substr.repeat(id.len() / i) {
-//             return true;
-//         }
-//     }
-
-//     false
-// }
-
-// /// from https://github.com/AhmedYassineMaalej/AoC-2025/blob/main/src/problems/day2.rs
-// pub fn part2(input: &str) -> usize {
-//     let ranges = input.trim().split(',').map(|range| {
-//         let (start, end) = range.split_once('-').unwrap();
-//         let start: usize = start.parse().unwrap();
-//         let end: usize = end.parse().unwrap();
-//         start..=end
-//     });
-
-//     let mut count = 0;
-//     for range in ranges {
-//         for id in range {
-//             let id_str = id.to_string();
-
-//             if invalid_id(&id_str) {
-//                 count += id;
-//             }
-//         }
-//     }
-
-//     count
-// }
-
 pub fn part2(input: &str) -> String {
     let mut invalid_ids = vec![0_u128];
 
@@ -85,25 +47,11 @@ pub fn part2(input: &str) -> String {
 
                 for i in a..=b {
                     let s = i.to_string();
-                    let count = s.chars().count();
 
-                    // if count % 2 == 0 {
-                    //     // dbg!(i);
-                    //     let mid = count / 2;
-                    //     let mut chars = s.chars();
-
-                    //     if chars.by_ref().take(mid).collect::<Vec<_>>() == chars.by_ref().take(mid).collect::<Vec<_>>() {
-                    //         dbg!(i);
-                    //         invalid_ids.push(i);
-                    //     }
-                    // } else {
-                        // need whole number divisor
-                        if let Some(_pattern) = largest_repeating_pattern(&s) {
-                            invalid_ids.push(i);
-                        }
-
-                        // dbg!("odd:", i);
-                    // }
+                    // need whole number divisor
+                    if let Some(_pattern) = largest_repeating_pattern(&s) {
+                        invalid_ids.push(i);
+                    }
                 }
             });
     });
