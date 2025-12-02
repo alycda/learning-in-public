@@ -122,27 +122,19 @@ impl Peer {
     }
 
     /// Merge state from another peer
-    fn merge_state(&mut self, from_peer: usize, state_json: &str) {
+    fn merge_state(&mut self, _from_peer: usize, state_json: &str) {
         let state: serde_json::Value = serde_json::from_str(state_json).unwrap();
 
-        // Merge part1 set
+        // Merge part1 set - pass the state directly
         if let Some(part1_state) = state.get("part1") {
-            let remote_set: Set<u128> = Set::from_state(
-                serde_json::from_value(part1_state.clone()).unwrap(),
-                Some(from_peer as u32),
-            )
-            .unwrap();
-            self.part1_set.merge(remote_set);
+            let remote_state = serde_json::from_value(part1_state.clone()).unwrap();
+            self.part1_set.merge(remote_state);
         }
 
         // Merge part2 set
         if let Some(part2_state) = state.get("part2") {
-            let remote_set: Set<u128> = Set::from_state(
-                serde_json::from_value(part2_state.clone()).unwrap(),
-                Some(from_peer as u32),
-            )
-            .unwrap();
-            self.part2_set.merge(remote_set);
+            let remote_state = serde_json::from_value(part2_state.clone()).unwrap();
+            self.part2_set.merge(remote_state);
         }
     }
 
@@ -163,8 +155,8 @@ impl Peer {
                     println!(
                         "[Peer {}] Merged state from Peer {}, now has part1: {} items, part2: {} items",
                         self.id, from_peer,
-                        self.part1_set.len(),
-                        self.part2_set.len()
+                        self.part1_set.value().len(),
+                        self.part2_set.value().len()
                     );
                     self.tx.send(PeerResponse::SyncComplete).unwrap();
                 }
@@ -172,8 +164,8 @@ impl Peer {
                     self.tx.send(PeerResponse::State { state: self.get_state() }).unwrap();
                 }
                 Ok(PeerMessage::GetResults) => {
-                    let part1_items: Vec<u128> = self.part1_set.iter().cloned().collect();
-                    let part2_items: Vec<u128> = self.part2_set.iter().cloned().collect();
+                    let part1_items: Vec<u128> = self.part1_set.value().iter().cloned().collect();
+                    let part2_items: Vec<u128> = self.part2_set.value().iter().cloned().collect();
 
                     self.tx.send(PeerResponse::Results {
                         part1_sum: part1_items.iter().sum(),
