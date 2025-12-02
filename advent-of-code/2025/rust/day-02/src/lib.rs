@@ -1,62 +1,39 @@
+fn parse_ranges(input: &str) -> impl Iterator<Item = (u128, u128)> + '_ {
+    input.lines()
+        .flat_map(|line| line.split(','))
+        .map(|id| {
+            let (a, b) = id.split_once('-').unwrap();
+            (a.parse().unwrap(), b.parse().unwrap())
+        })
+}
+
+fn has_repeating_halves(n: u64) -> bool {
+    let s = n.to_string();
+    let count = s.len();
+
+    if !count.is_multiple_of(2) {
+        return false;
+    }
+
+    let mid = count / 2;
+    let mut chars = s.chars();
+    chars.by_ref().take(mid).collect::<Vec<_>>() == chars.take(mid).collect::<Vec<_>>()
+}
+
 pub fn part1(input: &str) -> String {
-    let mut invalid_ids = vec![0];
-
-    input.lines().for_each(|line| {
-        line.split(',')
-            .for_each(|id| {
-                // dbg!(&id);
-                let mut ids = id.split('-');
-                let a = ids.next().unwrap().parse::<u64>().unwrap();
-                let b = ids.next().unwrap().parse::<u64>().unwrap();
-
-                // dbg!(a, b);
-
-                for i in a..=b {
-                    let s = i.to_string();
-                    let count = s.chars().count();
-
-                    if count.is_multiple_of(2) {
-                        // dbg!(i);
-                        let mid = count / 2;
-                        let mut chars = s.chars();
-
-                        if chars.by_ref().take(mid).collect::<Vec<_>>() == chars.by_ref().take(mid).collect::<Vec<_>>() {
-                            // dbg!(i);
-                            invalid_ids.push(i);
-                        }
-                    }
-                }
-            });
-    });
-
-    invalid_ids.iter().sum::<u64>().to_string()
+    parse_ranges(input)
+        .flat_map(|(a, b)| (a as u64)..=(b as u64))
+        .filter(|&i| has_repeating_halves(i))
+        .sum::<u64>()
+        .to_string()
 }
 
 pub fn part2(input: &str) -> String {
-    let mut invalid_ids = vec![0_u128];
-
-    input.lines().for_each(|line| {
-        line.split(',')
-            .for_each(|id| {
-                // dbg!(&id);
-                let mut ids = id.split('-');
-                let a = ids.next().unwrap().parse::<u128>().unwrap();
-                let b = ids.next().unwrap().parse::<u128>().unwrap();
-
-                // dbg!(a, b);
-
-                for i in a..=b {
-                    let s = i.to_string();
-
-                    // need whole number divisor
-                    if let Some(_pattern) = largest_repeating_pattern(&s) {
-                        invalid_ids.push(i);
-                    }
-                }
-            });
-    });
-
-    invalid_ids.iter().sum::<u128>().to_string()
+    parse_ranges(input)
+        .flat_map(|(a, b)| a..=b)
+        .filter(|&i| largest_repeating_pattern(&i.to_string()).is_some())
+        .sum::<u128>()
+        .to_string()
 }
 
 fn largest_repeating_pattern(s: &str) -> Option<&str> {
@@ -64,7 +41,6 @@ fn largest_repeating_pattern(s: &str) -> Option<&str> {
 
     (1..=n / 2)
         .rev()
-        // .inspect(|divisor| { dbg!(divisor); })
         .filter(|&len| n.is_multiple_of(len))
         .find(|&len| s[..len].repeat(n / len) == s)
         .map(|len| &s[..len])
