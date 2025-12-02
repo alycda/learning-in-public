@@ -172,53 +172,55 @@ enum WorkerResponse {
 
 /// Spawn a persistent worker thread for a site
 fn spawn_worker(
-    site_id: u32,
+    name: &'static str,
     dial: SharedDial,
     rx: Receiver<WorkerMsg>,
     tx: Sender<WorkerResponse>,
 ) -> JoinHandle<()> {
-    thread::spawn(move || {
-        let mut dial = dial;
-        let thread_id = thread::current().id();
+    thread::Builder::new()
+        .name(name.to_string())
+        .spawn(move || {
+            let mut dial = dial;
 
-        loop {
-            match rx.recv() {
-                Ok(WorkerMsg::Rotate(rotation)) => {
-                    let ops = dial.rotate(rotation);
-                    let position = dial.get_position();
-                    println!(
-                        "[Site {} - {:?}] Applied {:?} -> position: {}",
-                        site_id, thread_id, rotation, position
-                    );
-                    tx.send(WorkerResponse::RotateComplete {
-                        ops: ops.into(),
-                        position,
-                    }).unwrap();
+            loop {
+                match rx.recv() {
+                    Ok(WorkerMsg::Rotate(rotation)) => {
+                        let ops = dial.rotate(rotation);
+                        let position = dial.get_position();
+                        println!(
+                            "[{}] Applied {:?} -> position: {}",
+                            name, rotation, position
+                        );
+                        tx.send(WorkerResponse::RotateComplete {
+                            ops: ops.into(),
+                            position,
+                        }).unwrap();
+                    }
+                    Ok(WorkerMsg::Sync(ops)) => {
+                        ops.apply_to(&mut dial);
+                        println!(
+                            "[{}] Synced, position now: {}",
+                            name, dial.get_position()
+                        );
+                        tx.send(WorkerResponse::SyncComplete).unwrap();
+                    }
+                    Ok(WorkerMsg::GetState) => {
+                        tx.send(WorkerResponse::State {
+                            position: dial.get_position(),
+                            landings: dial.get_zero_landings(),
+                            crossings: dial.get_zero_crossings(),
+                        }).unwrap();
+                    }
+                    Ok(WorkerMsg::Shutdown) => {
+                        println!("[{}] Shutting down", name);
+                        tx.send(WorkerResponse::ShutdownComplete).unwrap();
+                        break;
+                    }
+                    Err(_) => break,
                 }
-                Ok(WorkerMsg::Sync(ops)) => {
-                    ops.apply_to(&mut dial);
-                    println!(
-                        "[Site {} - {:?}] Synced, position now: {}",
-                        site_id, thread_id, dial.get_position()
-                    );
-                    tx.send(WorkerResponse::SyncComplete).unwrap();
-                }
-                Ok(WorkerMsg::GetState) => {
-                    tx.send(WorkerResponse::State {
-                        position: dial.get_position(),
-                        landings: dial.get_zero_landings(),
-                        crossings: dial.get_zero_crossings(),
-                    }).unwrap();
-                }
-                Ok(WorkerMsg::Shutdown) => {
-                    println!("[Site {} - {:?}] Shutting down", site_id, thread_id);
-                    tx.send(WorkerResponse::ShutdownComplete).unwrap();
-                    break;
-                }
-                Err(_) => break,
             }
-        }
-    })
+        })
+        .unwrap()
 }
 
 /// Count how many times we cross zero when moving from old to new
@@ -256,15 +258,15 @@ L82";
 
     let rotations: Vec<Rotation> = INPUT.lines().map(Rotation::parse).collect();
 
-    // Create channels for Site 1 (handles Left rotations)
+    // Create channels for left elf (handles Left rotations)
     let (tx1, rx1) = mpsc::channel::<WorkerMsg>();
     let (resp_tx1, resp_rx1) = mpsc::channel::<WorkerResponse>();
 
-    // Create channels for Site 2 (handles Right rotations)
+    // Create channels for right elf (handles Right rotations)
     let (tx2, rx2) = mpsc::channel::<WorkerMsg>();
     let (resp_tx2, resp_rx2) = mpsc::channel::<WorkerResponse>();
 
-    // Create initial dial state and clone for Site 2
+    // Create initial dial state and clone for right elf
     let dial1 = SharedDial::new();
     let dial2 = dial1.clone_to_site(2);
 
@@ -273,30 +275,30 @@ L82";
     println!();
 
     // Spawn persistent worker threads
-    let handle1 = spawn_worker(1, dial1, rx1, resp_tx1);
-    let handle2 = spawn_worker(2, dial2, rx2, resp_tx2);
+    let handle1 = spawn_worker("left elf", dial1, rx1, resp_tx1);
+    let handle2 = spawn_worker("right elf", dial2, rx2, resp_tx2);
 
     // Process rotations in order
     for rotation in rotations {
         match rotation {
             Rotation::Left(_) => {
-                // Site 1 handles Left rotations
+                // left elf handles Left rotations
                 tx1.send(WorkerMsg::Rotate(rotation)).unwrap();
 
-                // Wait for Site 1 to complete and get ops
+                // Wait for left elf to complete and get ops
                 if let WorkerResponse::RotateComplete { ops, .. } = resp_rx1.recv().unwrap() {
-                    // Sync ops to Site 2
+                    // Sync ops to right elf
                     tx2.send(WorkerMsg::Sync(ops)).unwrap();
                     resp_rx2.recv().unwrap(); // wait for sync complete
                 }
             }
             Rotation::Right(_) => {
-                // Site 2 handles Right rotations
+                // right elf handles Right rotations
                 tx2.send(WorkerMsg::Rotate(rotation)).unwrap();
 
-                // Wait for Site 2 to complete and get ops
+                // Wait for right elf to complete and get ops
                 if let WorkerResponse::RotateComplete { ops, .. } = resp_rx2.recv().unwrap() {
-                    // Sync ops to Site 1
+                    // Sync ops to left elf
                     tx1.send(WorkerMsg::Sync(ops)).unwrap();
                     resp_rx1.recv().unwrap(); // wait for sync complete
                 }
@@ -314,10 +316,10 @@ L82";
     println!();
     println!("=== Final State ===");
     if let WorkerResponse::State { position, landings, crossings } = state1 {
-        println!("Site 1 - Position: {}, Landings: {}, Crossings: {}", position, landings, crossings);
+        println!("left elf  - Position: {}, Landings: {}, Crossings: {}", position, landings, crossings);
     }
     if let WorkerResponse::State { position, landings, crossings } = state2 {
-        println!("Site 2 - Position: {}, Landings: {}, Crossings: {}", position, landings, crossings);
+        println!("right elf - Position: {}, Landings: {}, Crossings: {}", position, landings, crossings);
     }
 
     // Shutdown workers
