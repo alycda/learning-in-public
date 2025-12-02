@@ -1,12 +1,4 @@
-trait IsMultipleOf {
-    fn is_multiple_of(&self, divisor: Self) -> bool;
-}
-
-impl IsMultipleOf for usize {
-    fn is_multiple_of(&self, divisor: Self) -> bool {
-        self % divisor == 0
-    }
-}
+#![feature(unsigned_is_multiple_of)]
 
 pub fn part1(input: &str) -> String {
     let mut invalid_ids = vec![0];
