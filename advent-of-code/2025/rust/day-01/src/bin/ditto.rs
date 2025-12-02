@@ -1,4 +1,4 @@
-use ditto::{Counter, Register};
+use ditto::{Counter, Error, Register};
 
 /// Rotation direction and distance
 #[derive(Clone, Copy, Debug)]
@@ -34,9 +34,9 @@ struct SharedDial {
 impl SharedDial {
     fn new() -> Self {
         Self {
-            position: Register::from(50), // starts at 50
-            zero_landings: Counter::new(),
-            zero_crossings: Counter::new(),
+            position: Register::new(50), // starts at 50
+            zero_landings: Counter::new(0),
+            zero_crossings: Counter::new(0),
         }
     }
 
@@ -77,10 +77,10 @@ impl SharedDial {
             None
         };
 
-        let position_op = self.position.set(new_pos);
+        let position_op = self.position.update(new_pos);
 
         DialOps {
-            position: position_op,
+            position: position_op.unwrap(),
             landing: landing_op,
             crossing: crossing_op,
         }
@@ -90,10 +90,10 @@ impl SharedDial {
     fn sync(&mut self, ops: DialOps) {
         self.position.execute_op(ops.position);
         if let Some(op) = ops.landing {
-            self.zero_landings.execute_op(op);
+            self.zero_landings.execute_op(&op.unwrap());
         }
         if let Some(op) = ops.crossing {
-            self.zero_crossings.execute_op(op);
+            self.zero_crossings.execute_op(&op.unwrap());
         }
     }
 
@@ -113,8 +113,8 @@ impl SharedDial {
 /// Operations to sync between sites
 struct DialOps {
     position: ditto::register::Op<i32>,
-    landing: Option<ditto::counter::Op>,
-    crossing: Option<ditto::counter::Op>,
+    landing: Option<Result<ditto::counter::Op, Error>>,
+    crossing: Option<Result<ditto::counter::Op, Error>>,
 }
 
 /// Count how many times we cross zero when moving from old to new
