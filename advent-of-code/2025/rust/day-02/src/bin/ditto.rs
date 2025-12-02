@@ -201,12 +201,15 @@ fn spawn_peer(
 }
 
 /// Coordinator facilitates sync between two random peers
+/// Returns the number of RangeProcessed messages consumed (to update the counter)
 fn sync_peers(
     rng: &mut ThreadRng,
     peer_txs: &[Sender<PeerMessage>],
     peer_rxs: &[Receiver<PeerResponse>],
     num_peers: usize,
-) {
+) -> usize {
+    let mut extra_processed = 0;
+
     // Pick two random different peers
     let peer_a = rng.gen_range(0..num_peers);
     let mut peer_b = rng.gen_range(0..num_peers);
@@ -214,22 +217,24 @@ fn sync_peers(
         peer_b = rng.gen_range(0..num_peers);
     }
 
-    // Get state from peer A
+    // Get state from peer A (drain other messages while waiting)
     peer_txs[peer_a].send(PeerMessage::GetState).unwrap();
     let state_a = loop {
-        if let Ok(PeerResponse::State { state }) = peer_rxs[peer_a].try_recv() {
-            break state;
+        match peer_rxs[peer_a].recv().unwrap() {
+            PeerResponse::State { state } => break state,
+            PeerResponse::RangeProcessed { .. } => extra_processed += 1,
+            _ => {}
         }
-        thread::sleep(Duration::from_micros(100));
     };
 
     // Get state from peer B
     peer_txs[peer_b].send(PeerMessage::GetState).unwrap();
     let state_b = loop {
-        if let Ok(PeerResponse::State { state }) = peer_rxs[peer_b].try_recv() {
-            break state;
+        match peer_rxs[peer_b].recv().unwrap() {
+            PeerResponse::State { state } => break state,
+            PeerResponse::RangeProcessed { .. } => extra_processed += 1,
+            _ => {}
         }
-        thread::sleep(Duration::from_micros(100));
     };
 
     // Send A's state to B, and B's state to A (bidirectional sync)
@@ -246,18 +251,28 @@ fn sync_peers(
         })
         .unwrap();
 
-    // Wait for sync to complete
-    let mut synced = 0;
-    while synced < 2 {
-        for rx in peer_rxs {
-            if let Ok(PeerResponse::SyncComplete) = rx.try_recv() {
-                synced += 1;
+    // Wait for sync to complete from both peers
+    let mut synced_a = false;
+    let mut synced_b = false;
+    while !synced_a || !synced_b {
+        if !synced_a {
+            match peer_rxs[peer_a].recv().unwrap() {
+                PeerResponse::SyncComplete => synced_a = true,
+                PeerResponse::RangeProcessed { .. } => extra_processed += 1,
+                _ => {}
             }
         }
-        thread::sleep(Duration::from_micros(100));
+        if !synced_b {
+            match peer_rxs[peer_b].recv().unwrap() {
+                PeerResponse::SyncComplete => synced_b = true,
+                PeerResponse::RangeProcessed { .. } => extra_processed += 1,
+                _ => {}
+            }
+        }
     }
 
     println!("  [Sync] Peer {} <-> Peer {}", peer_a, peer_b);
+    extra_processed
 }
 
 fn main() {
@@ -334,7 +349,8 @@ fn main() {
 
                 // Random chance (20%) to sync after each range processed
                 if num_peers > 1 && rng.gen_bool(0.2) {
-                    sync_peers(&mut rng, &peer_txs, &peer_rxs, num_peers);
+                    let extra = sync_peers(&mut rng, &peer_txs, &peer_rxs, num_peers);
+                    processed += extra; // Count any RangeProcessed consumed during sync
                     sync_count += 1;
 
                     // Random delay after sync (1-50ms)
@@ -357,16 +373,18 @@ fn main() {
             // Get state from peer i
             peer_txs[i].send(PeerMessage::GetState).unwrap();
             let state_i = loop {
-                if let Ok(PeerResponse::State { state }) = peer_rxs[i].recv() {
-                    break state;
+                match peer_rxs[i].recv().unwrap() {
+                    PeerResponse::State { state } => break state,
+                    _ => {} // Drain any other messages
                 }
             };
 
             // Get state from peer j
             peer_txs[j].send(PeerMessage::GetState).unwrap();
             let state_j = loop {
-                if let Ok(PeerResponse::State { state }) = peer_rxs[j].recv() {
-                    break state;
+                match peer_rxs[j].recv().unwrap() {
+                    PeerResponse::State { state } => break state,
+                    _ => {}
                 }
             };
 
@@ -378,13 +396,18 @@ fn main() {
                 .send(PeerMessage::SyncState { from_peer: i, state: state_i })
                 .unwrap();
 
-            // Wait for completion
-            for _ in 0..2 {
-                for rx in &peer_rxs {
-                    while let Ok(resp) = rx.try_recv() {
-                        if matches!(resp, PeerResponse::SyncComplete) {
-                            break;
-                        }
+            // Wait for completion from both peers
+            let mut done_i = false;
+            let mut done_j = false;
+            while !done_i || !done_j {
+                if !done_i {
+                    if let PeerResponse::SyncComplete = peer_rxs[i].recv().unwrap() {
+                        done_i = true;
+                    }
+                }
+                if !done_j {
+                    if let PeerResponse::SyncComplete = peer_rxs[j].recv().unwrap() {
+                        done_j = true;
                     }
                 }
             }
