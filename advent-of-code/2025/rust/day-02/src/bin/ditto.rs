@@ -334,31 +334,19 @@ fn main() {
         }
     }
 
-    // Process responses and randomly trigger syncs
+    // Wait for all processing to complete (no sync during processing)
     let mut processed = 0;
-    let mut sync_count = 0;
 
     while processed < total_assignments {
         for rx in &peer_rxs {
             if let Ok(PeerResponse::RangeProcessed { .. }) = rx.try_recv() {
                 processed += 1;
-
-                // Random chance (20%) to sync after each range processed
-                if num_peers > 1 && rng.gen_bool(0.2) {
-                    let extra = sync_peers(&mut rng, &peer_txs, &peer_rxs, num_peers);
-                    processed += extra; // Count any RangeProcessed consumed during sync
-                    sync_count += 1;
-
-                    // Random delay after sync (1-50ms)
-                    let delay = rng.gen_range(1..50);
-                    thread::sleep(Duration::from_millis(delay));
-                }
             }
         }
         thread::sleep(Duration::from_micros(500));
     }
 
-    println!("  Completed {} sync rounds during processing", sync_count);
+    println!("  All {} ranges processed", total_assignments);
 
     // Final sync phase: ensure full convergence with mesh sync
     println!("\n--- Final Mesh Sync ---");
