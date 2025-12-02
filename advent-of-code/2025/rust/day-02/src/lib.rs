@@ -1,3 +1,13 @@
+trait IsMultipleOf {
+    fn is_multiple_of(&self, divisor: Self) -> bool;
+}
+
+impl IsMultipleOf for usize {
+    fn is_multiple_of(&self, divisor: Self) -> bool {
+        self % divisor == 0
+    }
+}
+
 pub fn part1(input: &str) -> String {
     let mut invalid_ids = vec![0];
 
@@ -15,7 +25,7 @@ pub fn part1(input: &str) -> String {
                     let s = i.to_string();
                     let count = s.chars().count();
 
-                    if count % 2 == 0 {
+                    if count.is_multiple_of(2) {
                         // dbg!(i);
                         let mid = count / 2;
                         let mut chars = s.chars();
@@ -65,7 +75,7 @@ fn largest_repeating_pattern(s: &str) -> Option<&str> {
     (1..=n / 2)
         .rev()
         // .inspect(|divisor| { dbg!(divisor); })
-        .filter(|&len| n % len == 0)
+        .filter(|&len| n.is_multiple_of(len))
         .find(|&len| s[..len].repeat(n / len) == s)
         .map(|len| &s[..len])
 }
