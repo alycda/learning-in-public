@@ -1,6 +1,6 @@
 use ditto::{Counter, Error, Register};
-use std::sync::{Arc, Mutex};
-use std::thread;
+use std::sync::mpsc::{self, Receiver, Sender};
+use std::thread::{self, JoinHandle};
 
 /// Rotation direction and distance
 #[derive(Clone, Copy, Debug)]
@@ -119,6 +119,108 @@ struct DialOps {
     crossing: Option<Result<ditto::counter::Op, Error>>,
 }
 
+/// Serialized ops for sending over channels (JSON strings)
+#[derive(Debug)]
+struct SerializedOps {
+    position: String,
+    landing: Option<String>,
+    crossing: Option<String>,
+}
+
+impl From<DialOps> for SerializedOps {
+    fn from(ops: DialOps) -> Self {
+        Self {
+            position: serde_json::to_string(&ops.position).unwrap(),
+            landing: ops.landing.map(|r| serde_json::to_string(&r.unwrap()).unwrap()),
+            crossing: ops.crossing.map(|r| serde_json::to_string(&r.unwrap()).unwrap()),
+        }
+    }
+}
+
+impl SerializedOps {
+    fn apply_to(self, dial: &mut SharedDial) {
+        let pos_op: ditto::register::Op<i32> = serde_json::from_str(&self.position).unwrap();
+        dial.position.execute_op(pos_op);
+
+        if let Some(landing_json) = self.landing {
+            let op: ditto::counter::Op = serde_json::from_str(&landing_json).unwrap();
+            dial.zero_landings.execute_op(&op);
+        }
+        if let Some(crossing_json) = self.crossing {
+            let op: ditto::counter::Op = serde_json::from_str(&crossing_json).unwrap();
+            dial.zero_crossings.execute_op(&op);
+        }
+    }
+}
+
+/// Messages sent to worker threads
+enum WorkerMsg {
+    Rotate(Rotation),
+    Sync(SerializedOps),
+    GetState,
+    Shutdown,
+}
+
+/// Responses from worker threads
+#[derive(Debug)]
+enum WorkerResponse {
+    RotateComplete { ops: SerializedOps, position: i32 },
+    SyncComplete,
+    State { position: i32, landings: i64, crossings: i64 },
+    ShutdownComplete,
+}
+
+/// Spawn a persistent worker thread for a site
+fn spawn_worker(
+    site_id: u32,
+    dial: SharedDial,
+    rx: Receiver<WorkerMsg>,
+    tx: Sender<WorkerResponse>,
+) -> JoinHandle<()> {
+    thread::spawn(move || {
+        let mut dial = dial;
+        let thread_id = thread::current().id();
+
+        loop {
+            match rx.recv() {
+                Ok(WorkerMsg::Rotate(rotation)) => {
+                    let ops = dial.rotate(rotation);
+                    let position = dial.get_position();
+                    println!(
+                        "[Site {} - {:?}] Applied {:?} -> position: {}",
+                        site_id, thread_id, rotation, position
+                    );
+                    tx.send(WorkerResponse::RotateComplete {
+                        ops: ops.into(),
+                        position,
+                    }).unwrap();
+                }
+                Ok(WorkerMsg::Sync(ops)) => {
+                    ops.apply_to(&mut dial);
+                    println!(
+                        "[Site {} - {:?}] Synced, position now: {}",
+                        site_id, thread_id, dial.get_position()
+                    );
+                    tx.send(WorkerResponse::SyncComplete).unwrap();
+                }
+                Ok(WorkerMsg::GetState) => {
+                    tx.send(WorkerResponse::State {
+                        position: dial.get_position(),
+                        landings: dial.get_zero_landings(),
+                        crossings: dial.get_zero_crossings(),
+                    }).unwrap();
+                }
+                Ok(WorkerMsg::Shutdown) => {
+                    println!("[Site {} - {:?}] Shutting down", site_id, thread_id);
+                    tx.send(WorkerResponse::ShutdownComplete).unwrap();
+                    break;
+                }
+                Err(_) => break,
+            }
+        }
+    })
+}
+
 /// Count how many times we cross zero when moving from old to new
 /// Uses the same algorithm as lib.rs part2
 fn count_crossings(old: i32, rotation: &Rotation) -> i64 {
@@ -154,57 +256,77 @@ L82";
 
     let rotations: Vec<Rotation> = INPUT.lines().map(Rotation::parse).collect();
 
-    // Shared dial protected by mutex - both threads access the same state
-    let dial = Arc::new(Mutex::new(SharedDial::new()));
+    // Create channels for Site 1 (handles Left rotations)
+    let (tx1, rx1) = mpsc::channel::<WorkerMsg>();
+    let (resp_tx1, resp_rx1) = mpsc::channel::<WorkerResponse>();
 
-    println!("=== Distributed Dial Simulation (Threaded) ===");
-    println!("Initial position: {}", dial.lock().unwrap().get_position());
+    // Create channels for Site 2 (handles Right rotations)
+    let (tx2, rx2) = mpsc::channel::<WorkerMsg>();
+    let (resp_tx2, resp_rx2) = mpsc::channel::<WorkerResponse>();
+
+    // Create initial dial state and clone for Site 2
+    let dial1 = SharedDial::new();
+    let dial2 = dial1.clone_to_site(2);
+
+    println!("=== Distributed Dial Simulation (2 Persistent Workers) ===");
+    println!("Initial position: {}", dial1.get_position());
     println!();
 
-    // Process rotations, spawning a thread for each operation
-    // The mutex ensures ordering - threads block until they can acquire the lock
-    for rotation in rotations.iter() {
-        let dial_clone = Arc::clone(&dial);
-        let rotation = *rotation;
+    // Spawn persistent worker threads
+    let handle1 = spawn_worker(1, dial1, rx1, resp_tx1);
+    let handle2 = spawn_worker(2, dial2, rx2, resp_tx2);
 
-        let handle = thread::spawn(move || {
-            let site = match rotation {
-                Rotation::Left(_) => 1,
-                Rotation::Right(_) => 2,
-            };
+    // Process rotations in order
+    for rotation in rotations {
+        match rotation {
+            Rotation::Left(_) => {
+                // Site 1 handles Left rotations
+                tx1.send(WorkerMsg::Rotate(rotation)).unwrap();
 
-            // Acquire lock - blocks if another thread holds it
-            let mut dial = dial_clone.lock().unwrap();
+                // Wait for Site 1 to complete and get ops
+                if let WorkerResponse::RotateComplete { ops, .. } = resp_rx1.recv().unwrap() {
+                    // Sync ops to Site 2
+                    tx2.send(WorkerMsg::Sync(ops)).unwrap();
+                    resp_rx2.recv().unwrap(); // wait for sync complete
+                }
+            }
+            Rotation::Right(_) => {
+                // Site 2 handles Right rotations
+                tx2.send(WorkerMsg::Rotate(rotation)).unwrap();
 
-            // Apply rotation
-            let _ops = dial.rotate(rotation);
-            let pos = dial.get_position();
-
-            println!(
-                "[Thread {:?}] Site {} applied {:?} -> position: {}",
-                thread::current().id(),
-                site,
-                rotation,
-                pos
-            );
-        });
-
-        // Wait for this rotation to complete before starting next
-        // This maintains the required ordering
-        handle.join().unwrap();
+                // Wait for Site 2 to complete and get ops
+                if let WorkerResponse::RotateComplete { ops, .. } = resp_rx2.recv().unwrap() {
+                    // Sync ops to Site 1
+                    tx1.send(WorkerMsg::Sync(ops)).unwrap();
+                    resp_rx1.recv().unwrap(); // wait for sync complete
+                }
+            }
+        }
     }
+
+    // Get final state from both sites
+    tx1.send(WorkerMsg::GetState).unwrap();
+    tx2.send(WorkerMsg::GetState).unwrap();
+
+    let state1 = resp_rx1.recv().unwrap();
+    let state2 = resp_rx2.recv().unwrap();
 
     println!();
     println!("=== Final State ===");
-    let dial = dial.lock().unwrap();
-    println!(
-        "Position: {}, Zero Landings: {}, Zero Crossings: {}",
-        dial.get_position(),
-        dial.get_zero_landings(),
-        dial.get_zero_crossings()
-    );
+    if let WorkerResponse::State { position, landings, crossings } = state1 {
+        println!("Site 1 - Position: {}, Landings: {}, Crossings: {}", position, landings, crossings);
+    }
+    if let WorkerResponse::State { position, landings, crossings } = state2 {
+        println!("Site 2 - Position: {}, Landings: {}, Crossings: {}", position, landings, crossings);
+    }
+
+    // Shutdown workers
+    tx1.send(WorkerMsg::Shutdown).unwrap();
+    tx2.send(WorkerMsg::Shutdown).unwrap();
+    handle1.join().unwrap();
+    handle2.join().unwrap();
 
     println!();
-    println!("Part 1 (zero landings): {}", dial.get_zero_landings());
-    println!("Part 2 (zero crossings): {}", dial.get_zero_crossings());
+    println!("Part 1 (zero landings): check above");
+    println!("Part 2 (zero crossings): check above");
 }
