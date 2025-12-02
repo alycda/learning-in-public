@@ -1,10 +1,12 @@
 use ditto::{Counter, Error, Register};
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 /// Rotation direction and distance
 #[derive(Clone, Copy, Debug)]
 enum Rotation {
-    Left(i32),  // L - subtract
-    Right(i32), // R - add
+    Left(i32),  // L - subtract (handled by Site 1)
+    Right(i32), // R - add (handled by Site 2)
 }
 
 impl Rotation {
@@ -152,67 +154,57 @@ L82";
 
     let rotations: Vec<Rotation> = INPUT.lines().map(Rotation::parse).collect();
 
-    // Site 1 creates the shared dial
-    let mut dial1 = SharedDial::new();
+    // Shared dial protected by mutex - both threads access the same state
+    let dial = Arc::new(Mutex::new(SharedDial::new()));
 
-    // Site 2 gets a copy of the state
-    let mut dial2 = dial1.clone_to_site(2);
-
-    println!("=== Distributed Dial Simulation ===");
-    println!("Initial position: {}", dial1.get_position());
+    println!("=== Distributed Dial Simulation (Threaded) ===");
+    println!("Initial position: {}", dial.lock().unwrap().get_position());
     println!();
 
-    // Simulate distributed execution - alternating between sites
+    // Process rotations, spawning a thread for each operation
+    // The mutex ensures ordering - threads block until they can acquire the lock
     for rotation in rotations.iter() {
-        let site = match &rotation {
-            Rotation::Left(_) => { 1 },
-            Rotation::Right(_) => { 2 },
-        };
+        let dial_clone = Arc::clone(&dial);
+        let rotation = *rotation;
 
-        let (ops, pos) = if site == 1 {
-            let ops = dial1.rotate(*rotation);
-            let pos = dial1.get_position();
-            (ops, pos)
-        } else {
-            let ops = dial2.rotate(*rotation);
-            let pos = dial2.get_position();
-            (ops, pos)
-        };
+        let handle = thread::spawn(move || {
+            let site = match rotation {
+                Rotation::Left(_) => 1,
+                Rotation::Right(_) => 2,
+            };
 
-        // Sync to the other site
-        if site == 1 {
-            dial2.sync(ops);
-        } else {
-            dial1.sync(ops);
-        }
+            // Acquire lock - blocks if another thread holds it
+            let mut dial = dial_clone.lock().unwrap();
 
-        println!(
-            "Site {} applied {:?} -> position: {}",
-            site, rotation, pos
-        );
+            // Apply rotation
+            let _ops = dial.rotate(rotation);
+            let pos = dial.get_position();
+
+            println!(
+                "[Thread {:?}] Site {} applied {:?} -> position: {}",
+                thread::current().id(),
+                site,
+                rotation,
+                pos
+            );
+        });
+
+        // Wait for this rotation to complete before starting next
+        // This maintains the required ordering
+        handle.join().unwrap();
     }
 
     println!();
     println!("=== Final State ===");
-    println!("Dial 1 - Position: {}, Zero Landings: {}, Zero Crossings: {}",
-        dial1.get_position(),
-        dial1.get_zero_landings(),
-        dial1.get_zero_crossings()
-    );
-    println!("Dial 2 - Position: {}, Zero Landings: {}, Zero Crossings: {}",
-        dial2.get_position(),
-        dial2.get_zero_landings(),
-        dial2.get_zero_crossings()
+    let dial = dial.lock().unwrap();
+    println!(
+        "Position: {}, Zero Landings: {}, Zero Crossings: {}",
+        dial.get_position(),
+        dial.get_zero_landings(),
+        dial.get_zero_crossings()
     );
 
-    // Verify both sites have the same state (CRDT convergence)
-    assert_eq!(dial1.get_position(), dial2.get_position());
-    assert_eq!(dial1.get_zero_landings(), dial2.get_zero_landings());
-    assert_eq!(dial1.get_zero_crossings(), dial2.get_zero_crossings());
-
     println!();
-    println!("✓ Both sites converged to the same state!");
-    println!();
-    println!("Part 1 (zero landings): {}", dial1.get_zero_landings());
-    println!("Part 2 (zero crossings): {}", dial1.get_zero_crossings());
+    println!("Part 1 (zero landings): {}", dial.get_zero_landings());
+    println!("Part 2 (zero crossings): {}", dial.get_zero_crossings());
 }
