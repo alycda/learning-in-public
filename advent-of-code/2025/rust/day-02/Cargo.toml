@@ -1,3 +1,6 @@
 [package]
 name = "day-02"
 edition = "2024"
+
+[dev-dependencies]
+rstest.workspace = true
