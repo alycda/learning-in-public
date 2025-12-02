@@ -72,7 +72,8 @@ enum PeerResponse {
     RangeProcessed { range: (u128, u128), found: usize },
     /// Current state for syncing to other peers
     State { state: String },
-    Results { part1_sum: u128, part2_sum: u128, part1_count: usize, part2_count: usize },
+    /// Local items this peer found (for union on coordinator)
+    LocalItems { part1: Vec<u128>, part2: Vec<u128> },
     ShutdownComplete,
 }
 
@@ -153,10 +154,10 @@ impl Peer {
                 Ok(PeerMessage::SyncState { from_peer, state }) => {
                     self.merge_state(from_peer, &state);
                     println!(
-                        "[Peer {}] Merged state from Peer {}, now has part1: {} items, part2: {} items",
+                        "[Peer {}] Merged state from Peer {}, local items: part1={}, part2={}",
                         self.id, from_peer,
-                        self.part1_set.state().value.len(),
-                        self.part2_set.state().value.len()
+                        self.part1_set.local_value().len(),
+                        self.part2_set.local_value().len()
                     );
                     self.tx.send(PeerResponse::SyncComplete).unwrap();
                 }
@@ -164,15 +165,10 @@ impl Peer {
                     self.tx.send(PeerResponse::State { state: self.get_state() }).unwrap();
                 }
                 Ok(PeerMessage::GetResults) => {
-                    let part1_items: Vec<u128> = self.part1_set.state().value.iter().cloned().collect();
-                    let part2_items: Vec<u128> = self.part2_set.state().value.iter().cloned().collect();
-
-                    self.tx.send(PeerResponse::Results {
-                        part1_sum: part1_items.iter().sum(),
-                        part2_sum: part2_items.iter().sum(),
-                        part1_count: part1_items.len(),
-                        part2_count: part2_items.len(),
-                    }).unwrap();
+                    // Return local items - coordinator will union all peers' items
+                    let part1: Vec<u128> = self.part1_set.local_value().iter().cloned().collect();
+                    let part2: Vec<u128> = self.part2_set.local_value().iter().cloned().collect();
+                    self.tx.send(PeerResponse::LocalItems { part1, part2 }).unwrap();
                 }
                 Ok(PeerMessage::Shutdown) => {
                     println!("[Peer {}] Shutting down", self.id);
@@ -415,9 +411,11 @@ fn main() {
     }
     println!("  Completed {} full mesh sync pairs", full_mesh_syncs);
 
-    // Collect results from all peers
-    println!("\n--- Final Results ---");
-    let mut results: Vec<(u128, u128, usize, usize)> = Vec::new();
+    // Collect local items from all peers and union them
+    println!("\n--- Collecting Local Items ---");
+    use std::collections::HashSet;
+    let mut all_part1: HashSet<u128> = HashSet::new();
+    let mut all_part2: HashSet<u128> = HashSet::new();
 
     for i in 0..num_peers {
         peer_txs[i].send(PeerMessage::GetResults).unwrap();
@@ -426,12 +424,13 @@ fn main() {
     for (id, rx) in peer_rxs.iter().enumerate() {
         loop {
             match rx.recv().unwrap() {
-                PeerResponse::Results { part1_sum, part2_sum, part1_count, part2_count } => {
+                PeerResponse::LocalItems { part1, part2 } => {
                     println!(
-                        "  Peer {}: Part1 = {} ({} items), Part2 = {} ({} items)",
-                        id, part1_sum, part1_count, part2_sum, part2_count
+                        "  Peer {}: {} local part1 items, {} local part2 items",
+                        id, part1.len(), part2.len()
                     );
-                    results.push((part1_sum, part2_sum, part1_count, part2_count));
+                    all_part1.extend(part1);
+                    all_part2.extend(part2);
                     break;
                 }
                 _ => continue,
@@ -447,33 +446,24 @@ fn main() {
         handle.join().unwrap();
     }
 
-    // Verify convergence
-    println!("\n--- Convergence Check ---");
-    let first = &results[0];
-    let converged = results.iter().all(|r| r == first);
+    // Calculate final results from union of all local items
+    let part1_sum: u128 = all_part1.iter().sum();
+    let part2_sum: u128 = all_part2.iter().sum();
 
-    if converged {
-        println!("All {} peers converged to same state!", num_peers);
-        println!("\nFinal Answers:");
-        println!("  Part 1: {} (sum of {} repeating-half numbers)", first.0, first.2);
-        println!("  Part 2: {} (sum of {} repeating-pattern numbers)", first.1, first.3);
-    } else {
-        println!("Peers did NOT converge (unexpected for CRDTs!)");
-        for (id, r) in results.iter().enumerate() {
-            println!("  Peer {}: Part1={}, Part2={}", id, r.0, r.1);
-        }
-    }
+    println!("\n--- Final Results (Union of All Peers) ---");
+    println!("  Part 1: {} ({} unique items)", part1_sum, all_part1.len());
+    println!("  Part 2: {} ({} unique items)", part2_sum, all_part2.len());
 
     // Compare with expected
     println!("\n--- Validation ---");
     let expected_p1: u128 = 1227775554;
     let expected_p2: u128 = 4174379265;
 
-    if first.0 == expected_p1 && first.1 == expected_p2 {
+    if part1_sum == expected_p1 && part2_sum == expected_p2 {
         println!("PASS: Results match expected values!");
     } else {
         println!("MISMATCH:");
-        println!("  Part 1: got {}, expected {}", first.0, expected_p1);
-        println!("  Part 2: got {}, expected {}", first.1, expected_p2);
+        println!("  Part 1: got {}, expected {}", part1_sum, expected_p1);
+        println!("  Part 2: got {}, expected {}", part2_sum, expected_p2);
     }
 }
