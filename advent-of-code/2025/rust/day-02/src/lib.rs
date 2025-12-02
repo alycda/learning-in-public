@@ -32,7 +32,7 @@ pub fn part1(input: &str) -> String {
     invalid_ids.iter().sum::<u64>().to_string()
 }
 
-fn part2(input: &str) -> String {
+pub fn part2(input: &str) -> String {
     let mut invalid_ids = vec![0];
 
     input.lines().for_each(|line| {
@@ -49,7 +49,7 @@ fn part2(input: &str) -> String {
                     let s = i.to_string();
                     let count = s.chars().count();
 
-                    // if count % 2 == 0 {
+                    if count % 2 == 0 {
                         // dbg!(i);
                         let mid = count / 2;
                         let mut chars = s.chars();
@@ -58,12 +58,29 @@ fn part2(input: &str) -> String {
                             dbg!(i);
                             invalid_ids.push(i);
                         }
-                    // }
+                    } else {
+                        // need whole number divisor
+                        if let Some(_pattern) = largest_repeating_pattern(&s) {
+                            invalid_ids.push(i);
+                        }
+
+                        // dbg!("odd:", i);
+                    }
                 }
             });
     });
 
     invalid_ids.iter().sum::<u64>().to_string()
+}
+
+fn largest_repeating_pattern(s: &str) -> Option<&str> {
+    let n = s.len();
+
+    (1..=n / 2)
+        .rev()
+        .filter(|&len| n % len == 0)
+        .find(|&len| s[..len].repeat(n / len) == s)
+        .map(|len| &s[..len])
 }
 
 #[cfg(test)]
