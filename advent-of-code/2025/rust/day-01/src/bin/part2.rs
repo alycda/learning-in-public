@@ -1,8 +1,12 @@
 use day_01::part2;
 
 fn main() {
+    #[cfg(feature = "ci")]
+    let file = day_01::SAMPLE_INPUT;
+
+    #[cfg(not(feature = "ci"))]
     let file = include_str!("../../input.txt");
+
     let result = part2(file);
-    // let result = Dial.spin(file).1;
     println!("{}", result.unwrap());
 }

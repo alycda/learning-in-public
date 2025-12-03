@@ -1,5 +1,18 @@
 use std::{num::{NonZeroI32, NonZeroU32, TryFromIntError}, str::FromStr};
 
+/// Sample input for CI (real input.txt is gitignored)
+pub const SAMPLE_INPUT: &str = "\
+L68
+L30
+R48
+L5
+R60
+L55
+L1
+L99
+R14
+L82";
+
 type Rotations = Vec<Elf>;
 type Solution = NonZeroU32;
 /// part1, part2

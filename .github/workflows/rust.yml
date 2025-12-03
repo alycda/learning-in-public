@@ -39,11 +39,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: Cargo check (default features)
-        run: cargo check --workspace
+      - name: Cargo check (default + ci)
+        run: cargo check --workspace --features ci
 
-      - name: Cargo check (with regex)
-        run: cargo check --workspace --features regex
+      - name: Cargo check (regex + ci)
+        run: cargo check --workspace --features ci,regex
 
   check-pcre2:
     name: Cargo Check (PCRE2)
@@ -72,8 +72,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-pcre2-
 
-      - name: Cargo check (with pcre2)
-        run: cargo check --workspace --features pcre2
+      - name: Cargo check (pcre2 + ci)
+        run: cargo check --workspace --features ci,pcre2
 
       - name: Cargo check (all features)
         run: cargo check --workspace --all-features

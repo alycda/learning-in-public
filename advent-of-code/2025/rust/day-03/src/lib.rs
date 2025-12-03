@@ -8,6 +8,13 @@
 //! - `regex` feature: Uses Rust regex crate for digit extraction
 //! - `pcre2` feature: Uses pcre2 crate (wraps libpcre2-8) for benchmarking
 
+/// Sample input for CI (real input.txt is gitignored)
+pub const SAMPLE_INPUT: &str = "\
+987654321111111
+811111111111119
+234234234234278
+818181911112111";
+
 // ============================================================================
 // Iterator-based implementation (default)
 // ============================================================================
