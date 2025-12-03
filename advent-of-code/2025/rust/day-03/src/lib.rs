@@ -38,7 +38,7 @@ pub fn part2(input: &str) -> u64 {
             let nums = chars.map(|c| c.to_digit(10));
             // let _nums_clone = nums.clone();
 
-            let max = nums.take(char_count-12)
+            let max = nums.take(char_count-11)
                 .enumerate()
                 .max_by(|a, b| {
                     a.1.cmp(&b.1).then(std::cmp::Ordering::Greater)
@@ -49,9 +49,14 @@ pub fn part2(input: &str) -> u64 {
             dbg!(max_idx);
             let mut joltage = vec![max.1.unwrap()];
 
-            for _ in 0..11 {
+            for i in 0..11 {
                 let nums_clone = line.chars().map(|c| c.to_digit(10));
+                // Must limit search to leave room for remaining digits
+                // After this pick, we need (10-i) more picks
+                // So we can pick up to position: char_count - 1 - (10-i)
+                let take_count = char_count - 11 + i - max_idx;
                 let next_max = nums_clone.skip(max_idx+1)
+                    .take(take_count)
                     .enumerate()
                     .max_by(|a, b| {
                         a.1.cmp(&b.1).then(std::cmp::Ordering::Greater)
