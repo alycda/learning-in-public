@@ -38,7 +38,7 @@ pub fn part2(input: &str) -> u64 {
             let nums = chars.map(|c| c.to_digit(10));
             // let _nums_clone = nums.clone();
 
-            let max = nums.take(char_count-12)
+            let max = nums.take(char_count-11)
                 .enumerate()
                 .max_by(|a, b| {
                     a.1.cmp(&b.1).then(std::cmp::Ordering::Greater)
