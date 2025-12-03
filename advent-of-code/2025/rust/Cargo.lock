@@ -65,6 +65,8 @@ dependencies = [
 name = "day-02"
 version = "0.0.0"
 dependencies = [
+ "pcre2",
+ "regex",
  "rstest",
 ]
 
