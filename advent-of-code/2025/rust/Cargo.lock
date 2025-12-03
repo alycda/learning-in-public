@@ -69,6 +69,9 @@ dependencies = [
 [[package]]
 name = "day-03"
 version = "0.0.0"
+dependencies = [
+ "rstest",
+]
 
 [[package]]
 name = "ditto"
