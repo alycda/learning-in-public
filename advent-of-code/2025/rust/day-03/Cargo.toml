@@ -5,10 +5,11 @@ edition = "2024"
 [features]
 default = []
 regex = ["dep:regex"]
-ffi_pcre2 = []  # For later pcre2 FFI comparison
+pcre2 = ["dep:pcre2"]
 
 [dependencies]
 regex = { version = "1", optional = true }
+pcre2 = { version = "0.2", optional = true }
 
 [dev-dependencies]
 rstest.workspace = true
