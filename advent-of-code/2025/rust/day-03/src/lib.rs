@@ -9,8 +9,7 @@
 //! - `pcre2` feature: Uses pcre2 crate (wraps libpcre2-8) for benchmarking
 
 /// Sample input for CI (real input.txt is gitignored)
-pub const SAMPLE_INPUT: &str = "\
-987654321111111
+pub const SAMPLE_INPUT: &str = "987654321111111
 811111111111119
 234234234234278
 818181911112111";
@@ -239,15 +238,7 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(
-            part1(
-                "987654321111111
-811111111111119
-234234234234278
-818181911112111"
-            ),
-            357
-        );
+        assert_eq!(part1(SAMPLE_INPUT),357);
     }
 
     #[rstest]
@@ -265,15 +256,7 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(
-            part2(
-                "987654321111111
-811111111111119
-234234234234278
-818181911112111"
-            ),
-            3121910778619
-        );
+        assert_eq!(part2(SAMPLE_INPUT), 3121910778619);
     }
 
     #[rstest]
@@ -293,15 +276,7 @@ mod tests {
 
         #[test]
         fn test_regex_part1() {
-            assert_eq!(
-                regex_impl::part1(
-                    "987654321111111
-811111111111119
-234234234234278
-818181911112111"
-                ),
-                357
-            );
+            assert_eq!(regex_impl::part1(SAMPLE_INPUT), 357);
         }
 
         #[rstest]
@@ -315,15 +290,7 @@ mod tests {
 
         #[test]
         fn test_regex_part2() {
-            assert_eq!(
-                regex_impl::part2(
-                    "987654321111111
-811111111111119
-234234234234278
-818181911112111"
-                ),
-                3121910778619
-            );
+            assert_eq!(regex_impl::part2(SAMPLE_INPUT), 3121910778619);
         }
 
         #[rstest]
@@ -355,15 +322,7 @@ mod tests {
 
         #[test]
         fn test_pcre2_part1() {
-            assert_eq!(
-                pcre2_impl::part1(
-                    "987654321111111
-811111111111119
-234234234234278
-818181911112111"
-                ),
-                357
-            );
+            assert_eq!(pcre2_impl::part1(SAMPLE_INPUT), 357);
         }
 
         #[rstest]
@@ -377,15 +336,7 @@ mod tests {
 
         #[test]
         fn test_pcre2_part2() {
-            assert_eq!(
-                pcre2_impl::part2(
-                    "987654321111111
-811111111111119
-234234234234278
-818181911112111"
-                ),
-                3121910778619
-            );
+            assert_eq!(pcre2_impl::part2(SAMPLE_INPUT), 3121910778619);
         }
 
         #[rstest]

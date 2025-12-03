@@ -1,8 +1,7 @@
 use std::{num::{NonZeroI32, NonZeroU32, TryFromIntError}, str::FromStr};
 
 /// Sample input for CI (real input.txt is gitignored)
-pub const SAMPLE_INPUT: &str = "\
-L68
+pub const SAMPLE_INPUT: &str = "L68
 L30
 R48
 L5
@@ -203,26 +202,15 @@ pub mod ffi {
 mod tests {
     use super::*;
 
-    const INPUT: &str = "L68
-L30
-R48
-L5
-R60
-L55
-L1
-L99
-R14
-L82";
-
     #[test]
     fn test_part1() {
-        assert_eq!(Dial::part1(INPUT), Ok(NonZeroU32::new(3).unwrap()));
+        assert_eq!(Dial::part1(SAMPLE_INPUT), Ok(NonZeroU32::new(3).unwrap()));
         // assert_eq!(Dial::default().spin(Dial::parse(INPUT)).zero_crossings());
     }
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(INPUT).unwrap(), "6".to_string());
+        assert_eq!(part2(SAMPLE_INPUT).unwrap(), "6".to_string());
         // assert_eq!(Dial::part2(INPUT), Ok(NonZeroU32::new(6).unwrap()));
     }
 }

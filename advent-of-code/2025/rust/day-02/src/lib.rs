@@ -202,11 +202,9 @@ mod tests {
     use super::*;
     use rstest::rstest;
 
-    const TEST_INPUT: &str = "11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124";
-
     #[test]
     fn test_part1() {
-        assert_eq!(part1(TEST_INPUT), "1227775554".to_string());
+        assert_eq!(part1(SAMPLE_INPUT), "1227775554".to_string());
     }
 
     #[rstest]
@@ -229,29 +227,29 @@ mod tests {
 
     #[test]
     fn test_part2() {
-        assert_eq!(part2(TEST_INPUT), "4174379265".to_string());
+        assert_eq!(part2(SAMPLE_INPUT), "4174379265".to_string());
     }
 
     // Regex implementation tests
     #[cfg(feature = "regex")]
     mod regex_tests {
         use super::super::regex_impl;
-        use super::TEST_INPUT;
+        use super::SAMPLE_INPUT;
 
         #[test]
         fn test_regex_part1() {
-            assert_eq!(regex_impl::part1(TEST_INPUT), "1227775554".to_string());
+            assert_eq!(regex_impl::part1(SAMPLE_INPUT), "1227775554".to_string());
         }
 
         #[test]
         fn test_regex_part2() {
-            assert_eq!(regex_impl::part2(TEST_INPUT), "4174379265".to_string());
+            assert_eq!(regex_impl::part2(SAMPLE_INPUT), "4174379265".to_string());
         }
 
         #[test]
         fn implementations_match() {
-            assert_eq!(super::part1(TEST_INPUT), regex_impl::part1(TEST_INPUT));
-            assert_eq!(super::part2(TEST_INPUT), regex_impl::part2(TEST_INPUT));
+            assert_eq!(super::part1(SAMPLE_INPUT), regex_impl::part1(SAMPLE_INPUT));
+            assert_eq!(super::part2(SAMPLE_INPUT), regex_impl::part2(SAMPLE_INPUT));
         }
     }
 
@@ -259,22 +257,22 @@ mod tests {
     #[cfg(feature = "pcre2")]
     mod pcre2_tests {
         use super::super::pcre2_impl;
-        use super::TEST_INPUT;
+        use super::SAMPLE_INPUT;
 
         #[test]
         fn test_pcre2_part1() {
-            assert_eq!(pcre2_impl::part1(TEST_INPUT), "1227775554".to_string());
+            assert_eq!(pcre2_impl::part1(SAMPLE_INPUT), "1227775554".to_string());
         }
 
         #[test]
         fn test_pcre2_part2() {
-            assert_eq!(pcre2_impl::part2(TEST_INPUT), "4174379265".to_string());
+            assert_eq!(pcre2_impl::part2(SAMPLE_INPUT), "4174379265".to_string());
         }
 
         #[test]
         fn implementations_match() {
-            assert_eq!(super::part1(TEST_INPUT), pcre2_impl::part1(TEST_INPUT));
-            assert_eq!(super::part2(TEST_INPUT), pcre2_impl::part2(TEST_INPUT));
+            assert_eq!(super::part1(SAMPLE_INPUT), pcre2_impl::part1(SAMPLE_INPUT));
+            assert_eq!(super::part2(SAMPLE_INPUT), pcre2_impl::part2(SAMPLE_INPUT));
         }
     }
 }
