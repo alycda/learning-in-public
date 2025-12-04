@@ -4,6 +4,7 @@ edition = "2024"
 
 [features]
 default = []
+ci = []  # Use SAMPLE_INPUT instead of input.txt
 regex = ["dep:regex"]
 pcre2 = ["dep:pcre2"]
 
