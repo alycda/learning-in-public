@@ -1,0 +1,6 @@
+[package]
+name = "day-04"
+edition = "2024"
+
+[dependencies]
+aoc-ornaments.workspace = true
