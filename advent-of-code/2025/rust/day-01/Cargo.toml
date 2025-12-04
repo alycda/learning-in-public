@@ -3,6 +3,7 @@ name = "day-01"
 edition = "2024"
 
 [features]
+ci = []  # Use SAMPLE_INPUT instead of input.txt
 ffi_c = []
 
 [build-dependencies]
