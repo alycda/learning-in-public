@@ -1,9 +1,9 @@
 use std::str::FromStr;
-use aoc_ornaments::spatial::Grid;
+use aoc_ornaments::spatial::{Grid, Position};
 
-pub fn part1(input: &str) -> u32 {
-    let grid = Grid::<char>::from_str(input).unwrap();
-    let mut accessible = 0;
+pub fn part1(grid: Grid::<char>) -> Vec<Position> {
+    // let grid = Grid::<char>::from_str(input).unwrap();
+    let mut accessible = vec![];
 
     // dbg!(grid);
 
@@ -16,12 +16,28 @@ pub fn part1(input: &str) -> u32 {
             // dbg!(neighbors);
 
             if neighbors < 4 {
-                accessible += 1
+                accessible.push(pos);
             }
         }
     });
 
     accessible
+}
+
+pub fn part2(mut grid: Grid::<char>) -> usize {
+    let mut removable = part1(grid);
+    let mut count = removable.len();
+
+    while removable.len() > 0 {
+        removable.iter().for_each(|pos| {
+            grid.set_at_unbounded(*pos, '.');
+
+            removable = part1(grid);
+            count += removable.len();
+        });
+    }
+
+    count
 }
 
 pub const SAMPLE_INPUT: &str = "..@@.@@@@.
@@ -41,6 +57,13 @@ mod tests {
 
     #[test]
     fn test_part1() {
-        assert_eq!(part1(SAMPLE_INPUT), 13);
+        let mut grid = Grid::<char>::from_str(SAMPLE_INPUT).unwrap();
+        assert_eq!(part1(grid).len(), 13);
+    }
+
+    #[test]
+    fn test_part2() {
+        let mut grid = Grid::<char>::from_str(SAMPLE_INPUT).unwrap();
+        assert_eq!(part2(grid), 43);
     }
 }
