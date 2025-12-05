@@ -173,6 +173,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "day-05"
+version = "0.0.0"
+dependencies = [
+ "aoc-ornaments",
+ "itertools",
+]
+
+[[package]]
 name = "derive_more"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
