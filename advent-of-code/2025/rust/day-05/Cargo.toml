@@ -1,0 +1,10 @@
+[package]
+name = "day-05"
+edition = "2024"
+
+[features]
+default = []
+ci = []  # Use SAMPLE_INPUT instead of input.txt
+
+[dependencies]
+itertools = "*"
