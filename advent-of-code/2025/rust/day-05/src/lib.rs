@@ -66,7 +66,7 @@ pub fn part2(input: &str) -> usize {
 
     let merged = parse_and_merge_ranges(fresh_ranges);
 
-    merged.iter().map(|(start, end)| { dbg!(end - start) }).sum()
+    merged.iter().map(|(start, end)| { dbg!(end - start) + 1 }).sum()
 }
 
 pub const SAMPLE_INPUT: &str = "3-5
