@@ -61,15 +61,19 @@ pub fn part1(input: &str) -> usize {
         .count()
 }
 
-pub fn part2(_input: &str) -> String {
+pub fn part2(input: &str) -> usize {
+    let (fresh_ranges, _) = input.split("\n\n").collect_tuple().unwrap();
 
-    todo!()
+    let merged = parse_and_merge_ranges(fresh_ranges);
+
+    merged.iter().map(|(start, end)| { dbg!(end - start) }).sum()
 }
 
 pub const SAMPLE_INPUT: &str = "3-5
 10-14
 16-20
 12-18
+
 1
 5
 8
@@ -84,5 +88,10 @@ mod tests {
     #[test]
     fn test_part1() {
         assert_eq!(part1(SAMPLE_INPUT), 3);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(SAMPLE_INPUT), 14);
     }
 }
