@@ -7,5 +7,4 @@ default = []
 ci = []  # Use SAMPLE_INPUT instead of input.txt
 
 [dependencies]
-aoc-ornaments.workspace = true
 itertools = "*"
