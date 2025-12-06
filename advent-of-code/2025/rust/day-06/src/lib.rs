@@ -46,19 +46,31 @@ pub fn part2(input: &str, ops: &str, size: usize) -> u64 {
         }
     }
 
-    // For each column, right-align numbers and read vertically
+    // For each column, align based on operator and read vertically
     ops.split_whitespace().enumerate().map(|(col_idx, op)| {
         let col = &columns[col_idx];
         let max_width = col.iter().map(|n| n.len()).max().unwrap_or(0);
 
-        // Pad each number to max_width (right-aligned)
+        // Operator determines alignment: * = right-align, + = left-align
         let padded: Vec<String> = col.iter()
-            .map(|n| format!("{:>width$}", n, width = max_width))
+            .map(|n| {
+                if op == "*" {
+                    format!("{:>width$}", n, width = max_width) // right-align
+                } else {
+                    format!("{:<width$}", n, width = max_width) // left-align
+                }
+            })
             .collect();
 
-        // Read vertically for each position
-        let vertical_numbers: Vec<u64> = (0..max_width)
-            .map(|pos| {
+        // Read positions: * reads right-to-left, + reads left-to-right
+        let positions: Vec<usize> = if op == "*" {
+            (0..max_width).rev().collect()
+        } else {
+            (0..max_width).collect()
+        };
+
+        let vertical_numbers: Vec<u64> = positions.iter()
+            .map(|&pos| {
                 let vertical: String = padded.iter()
                     .map(|s| s.chars().nth(pos).unwrap())
                     .collect();
