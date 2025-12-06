@@ -35,42 +35,50 @@ pub fn part1(input: &str, ops: &str) -> u64 {
 
 /// assume max 4 digits
 pub fn part2(input: &str, ops: &str, size: usize) -> u64 {
-    // // input.lines().for_each(|line| {
-    // //     // dbg!(line);
-    // //     line.split_whitespace().for_each(|num| {
-    // //         dbg!(num.parse::<u64>().unwrap());
-    // //     });
-    // // });
+    let mut lines = input.lines().peekable();
 
-    // let mut lines = input.lines().peekable();
+    let first = lines.peek().unwrap();
+    let capacity = dbg!(first.split_whitespace().count());
 
-    // let first = lines.peek().unwrap();
-    // let capacity = dbg!(first.split_whitespace().count());
-
-    // // let mut matrix = vec![vec![]; capacity];
-
-    // lines.for_each(|line| {
-    //     dbg!(line);
-    //     // line.split_whitespace().enumerate().for_each(|(idx, num)| {
-    //     //     // dbg!(num.parse::<u64>().unwrap());
-
-    //     //     matrix[idx].push(num.parse::<u64>().unwrap());
-    //     // });
-    // });
-
-    // // dbg!(&matrix);
+    let mut matrix = vec![vec![]; capacity];
 
     let grid = Grid::<char>::from_str(input).unwrap();
 
     // dbg!(&grid);
 
     for col in 0..grid.get_width() {
-        for row in 0..grid.get_height() {
-            let pos = Position::new(col as i32, row as i32);
+        // dbg!(col);
 
-            dbg!(grid.get_at_unbounded(pos));
+        for row in (0..grid.get_height()).step_by(size) {
+            // dbg!(row);
+
+            let a = Position::new(col as i32, row as i32);
+            let b = Position::new(col as i32, (row + 1) as i32);
+            let c = Position::new(col as i32, (row + 2) as i32);
+            let d = Position::new(col as i32, (row + 2) as i32);
+
+            let a = dbg!(grid.get_at_unbounded(a));
+            let b = dbg!(grid.get_at_unbounded(b));
+            let c = dbg!(grid.get_at_unbounded(c));
+
+            if size == 4 {
+                dbg!(grid.get_at_unbounded(d));
+            }
+
+            let s: String = vec![a,b,c].iter().collect();
+
+            matrix[row].push( s );
         }
     }
+
+    dbg!(&matrix);
+
+    matrix[0].iter()
+        // .filter(|v| !v.is_empty())
+        .map(|s| s.trim().parse::<u64>().unwrap_or(0))
+        .for_each(|num|{
+            dbg!(num);
+        });
 
     todo!()
 }
