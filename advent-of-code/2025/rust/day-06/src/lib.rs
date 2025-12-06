@@ -1,3 +1,7 @@
+use std::str::FromStr;
+
+use aoc_ornaments::spatial::{Grid, Position};
+
 pub fn part1(input: &str, ops: &str) -> u64 {
     let mut lines = input.lines().peekable();
 
@@ -7,9 +11,7 @@ pub fn part1(input: &str, ops: &str) -> u64 {
     let mut matrix = vec![vec![]; capacity];
 
     lines.for_each(|line| {
-        let mut items = line.split_whitespace();
-
-        items.enumerate().for_each(|(idx, num)| {
+        line.split_whitespace().enumerate().for_each(|(idx, num)| {
             // dbg!(num.parse::<u64>().unwrap());
 
             matrix[idx].push(num.parse::<u64>().unwrap());
@@ -31,7 +33,45 @@ pub fn part1(input: &str, ops: &str) -> u64 {
     }).sum()
 }
 
-pub fn part2(_input: &str) -> String {
+/// assume max 4 digits
+pub fn part2(input: &str, ops: &str, size: usize) -> u64 {
+    // // input.lines().for_each(|line| {
+    // //     // dbg!(line);
+    // //     line.split_whitespace().for_each(|num| {
+    // //         dbg!(num.parse::<u64>().unwrap());
+    // //     });
+    // // });
+
+    // let mut lines = input.lines().peekable();
+
+    // let first = lines.peek().unwrap();
+    // let capacity = dbg!(first.split_whitespace().count());
+
+    // // let mut matrix = vec![vec![]; capacity];
+
+    // lines.for_each(|line| {
+    //     dbg!(line);
+    //     // line.split_whitespace().enumerate().for_each(|(idx, num)| {
+    //     //     // dbg!(num.parse::<u64>().unwrap());
+
+    //     //     matrix[idx].push(num.parse::<u64>().unwrap());
+    //     // });
+    // });
+
+    // // dbg!(&matrix);
+
+    let grid = Grid::<char>::from_str(input).unwrap();
+
+    // dbg!(&grid);
+
+    for col in 0..grid.get_width() {
+        for row in 0..grid.get_height() {
+            let pos = Position::new(col as i32, row as i32);
+
+            dbg!(grid.get_at_unbounded(pos));
+        }
+    }
+
     todo!()
 }
 
@@ -44,9 +84,24 @@ pub const OPS: &str = "*   +   *   +  ";
 #[cfg(test)]
 mod tests {
     use super::*;
+    // use rstest::rstest;
 
     #[test]
     fn test_part1() {
         assert_eq!(part1(SAMPLE_INPUT, OPS), 4277556);
+    }
+
+    // #[rstest]
+    // #[case("64 23 314", "+", 1058)] // 4 + 431 + 623
+    // #[case("51 387 215", "*", 3253600)] // 175 * 581 * 32
+    // #[case("328 64 98", "+", 625)] // 8 + 248 + 369
+    // #[case("123 45 6", "+", 8544)] // 356 * 24 * 1
+    // fn test_cases(#[case] input: &str, #[case] op: &str, #[case] expected: u64) {
+    //     assert_eq!(part2(input, op), expected);
+    // }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(SAMPLE_INPUT, OPS, 3), 3263827);
     }
 }
