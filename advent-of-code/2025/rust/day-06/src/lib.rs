@@ -43,14 +43,18 @@ pub fn part2(input: &str, ops: &str, size: usize) -> u64 {
     let grid = Grid::<char>::from_str(input).unwrap();
 
     // Determine which logical column each character column belongs to
-    // by finding word boundaries in the first row
+    // A column boundary is where ALL rows have a space
     let mut col_mapping: Vec<Option<usize>> = vec![None; grid.get_width()];
     let mut logical_col = 0;
     let mut in_word = false;
 
     for char_col in 0..grid.get_width() {
-        let c = grid.get_at_unbounded(Position::new(char_col as i32, 0));
-        if c != ' ' {
+        // Check if ALL rows have a space at this column
+        let all_spaces = (0..grid.get_height()).all(|row| {
+            grid.get_at_unbounded(Position::new(char_col as i32, row as i32)) == ' '
+        });
+
+        if !all_spaces {
             if !in_word {
                 in_word = true;
             }
