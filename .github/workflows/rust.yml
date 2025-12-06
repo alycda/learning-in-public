@@ -1,0 +1,79 @@
+name: Rust
+
+on:
+  push:
+    branches: [main, master, "AdventOfCode/*"]
+    paths:
+      - "advent-of-code/**/rust/**"
+      - ".github/workflows/rust.yml"
+  pull_request:
+    paths:
+      - "advent-of-code/**/rust/**"
+      - ".github/workflows/rust.yml"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    name: Cargo Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: advent-of-code/2025/rust
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            advent-of-code/2025/rust/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Cargo check (default + ci)
+        run: cargo check --workspace --features ci
+
+      - name: Cargo check (regex + ci)
+        run: cargo check --workspace --features ci,regex
+
+  check-pcre2:
+    name: Cargo Check (PCRE2)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: advent-of-code/2025/rust
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libpcre2-dev
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            advent-of-code/2025/rust/target
+          key: ${{ runner.os }}-cargo-pcre2-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-pcre2-
+
+      - name: Cargo check (pcre2 + ci)
+        run: cargo check --workspace --features ci,pcre2
+
+      - name: Cargo check (all features)
+        run: cargo check --workspace --all-features
