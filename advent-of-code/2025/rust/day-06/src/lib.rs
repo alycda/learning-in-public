@@ -1,3 +1,6 @@
+use std::str::FromStr;
+
+use aoc_ornaments::spatial::{Grid, Position};
 
 pub fn part1(input: &str, ops: &str) -> u64 {
     let mut lines = input.lines().peekable();
@@ -32,54 +35,62 @@ pub fn part1(input: &str, ops: &str) -> u64 {
 
 /// assume max 4 digits
 pub fn part2(input: &str, ops: &str, size: usize) -> u64 {
-    let mut lines = input.lines().peekable();
+    let first_line = input.lines().next().unwrap();
+    let capacity = first_line.split_whitespace().count();
 
-    let first = lines.peek().unwrap();
-    let capacity = first.split_whitespace().count();
+    let mut matrix: Vec<Vec<String>> = vec![vec![]; capacity];
 
-    // Collect numbers for each column (same as part1)
-    let mut columns: Vec<Vec<String>> = vec![vec![]; capacity];
+    let grid = Grid::<char>::from_str(input).unwrap();
 
-    for line in input.lines() {
-        for (idx, num) in line.split_whitespace().enumerate() {
-            columns[idx].push(num.to_string());
+    // Determine which logical column each character column belongs to
+    // by finding word boundaries in the first row
+    let mut col_mapping: Vec<Option<usize>> = vec![None; grid.get_width()];
+    let mut logical_col = 0;
+    let mut in_word = false;
+
+    for char_col in 0..grid.get_width() {
+        let c = grid.get_at_unbounded(Position::new(char_col as i32, 0));
+        if c != ' ' {
+            if !in_word {
+                in_word = true;
+            }
+            col_mapping[char_col] = Some(logical_col);
+        } else {
+            if in_word {
+                logical_col += 1;
+                in_word = false;
+            }
         }
     }
 
-    // For each column, align based on operator and read vertically
-    ops.split_whitespace().enumerate().map(|(col_idx, op)| {
-        let col = &columns[col_idx];
-        let max_width = col.iter().map(|n| n.len()).max().unwrap_or(0);
-
-        // Operator determines alignment: * = right-align, + = left-align
-        let padded: Vec<String> = col.iter()
-            .map(|n| {
-                if op == "*" {
-                    format!("{:>width$}", n, width = max_width) // right-align
-                } else {
-                    format!("{:<width$}", n, width = max_width) // left-align
+    // For each character column, read vertically and group by logical column
+    for char_col in 0..grid.get_width() {
+        if let Some(log_col) = col_mapping[char_col] {
+            let mut vertical = String::new();
+            for row in (0..grid.get_height()).step_by(size) {
+                for offset in 0..size {
+                    if row + offset < grid.get_height() {
+                        let c = grid.get_at_unbounded(Position::new(char_col as i32, (row + offset) as i32));
+                        vertical.push(c);
+                    }
                 }
-            })
-            .collect();
+            }
+            matrix[log_col].push(vertical);
+        }
+    }
 
-        // Read positions: * reads right-to-left, + reads left-to-right
-        let positions: Vec<usize> = if op == "*" {
-            (0..max_width).rev().collect()
-        } else {
-            (0..max_width).collect()
-        };
-
-        let vertical_numbers: Vec<u64> = positions.iter()
-            .map(|&pos| {
-                let vertical: String = padded.iter()
-                    .map(|s| s.chars().nth(pos).unwrap())
-                    .collect();
-                vertical.trim().parse::<u64>().unwrap_or(0)
-            })
+    // Apply operators to each logical column
+    ops.split_whitespace().enumerate().map(|(col_idx, op)| {
+        let vertical_numbers: Vec<u64> = matrix[col_idx]
+            .iter()
+            .map(|s| s.trim().parse::<u64>().unwrap_or(0))
             .filter(|&n| n > 0)
             .collect();
 
-        // Apply operator
+        if vertical_numbers.is_empty() {
+            return 0;
+        }
+
         vertical_numbers.iter().skip(1).fold(vertical_numbers[0], |acc, &next| {
             match op {
                 "*" => acc * next,
