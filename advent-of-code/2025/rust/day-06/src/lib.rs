@@ -35,52 +35,74 @@ pub fn part1(input: &str, ops: &str) -> u64 {
 
 /// assume max 4 digits
 pub fn part2(input: &str, ops: &str, size: usize) -> u64 {
-    let mut lines = input.lines().peekable();
+    let first_line = input.lines().next().unwrap();
+    let capacity = first_line.split_whitespace().count();
 
-    let first = lines.peek().unwrap();
-    let capacity = dbg!(first.split_whitespace().count());
-
-    let mut matrix = vec![vec![]; capacity];
+    let mut matrix: Vec<Vec<String>> = vec![vec![]; capacity];
 
     let grid = Grid::<char>::from_str(input).unwrap();
 
-    // dbg!(&grid);
+    // Determine which logical column each character column belongs to
+    // A column boundary is where ALL rows have a space
+    let mut col_mapping: Vec<Option<usize>> = vec![None; grid.get_width()];
+    let mut logical_col = 0;
+    let mut in_word = false;
 
-    for col in 0..grid.get_width() {
-        // dbg!(col);
+    for char_col in 0..grid.get_width() {
+        // Check if ALL rows have a space at this column
+        let all_spaces = (0..grid.get_height()).all(|row| {
+            grid.get_at_unbounded(Position::new(char_col as i32, row as i32)) == ' '
+        });
 
-        for row in (0..grid.get_height()).step_by(size) {
-            // dbg!(row);
-
-            let a = Position::new(col as i32, row as i32);
-            let b = Position::new(col as i32, (row + 1) as i32);
-            let c = Position::new(col as i32, (row + 2) as i32);
-            let d = Position::new(col as i32, (row + 2) as i32);
-
-            let a = dbg!(grid.get_at_unbounded(a));
-            let b = dbg!(grid.get_at_unbounded(b));
-            let c = dbg!(grid.get_at_unbounded(c));
-
-            if size == 4 {
-                dbg!(grid.get_at_unbounded(d));
+        if !all_spaces {
+            if !in_word {
+                in_word = true;
             }
-
-            let s: String = vec![a,b,c].iter().collect();
-
-            matrix[row].push( s );
+            col_mapping[char_col] = Some(logical_col);
+        } else {
+            if in_word {
+                logical_col += 1;
+                in_word = false;
+            }
         }
     }
 
-    dbg!(&matrix);
+    // For each character column, read vertically and group by logical column
+    for char_col in 0..grid.get_width() {
+        if let Some(log_col) = col_mapping[char_col] {
+            let mut vertical = String::new();
+            for row in (0..grid.get_height()).step_by(size) {
+                for offset in 0..size {
+                    if row + offset < grid.get_height() {
+                        let c = grid.get_at_unbounded(Position::new(char_col as i32, (row + offset) as i32));
+                        vertical.push(c);
+                    }
+                }
+            }
+            matrix[log_col].push(vertical);
+        }
+    }
 
-    matrix[0].iter()
-        // .filter(|v| !v.is_empty())
-        .map(|s| s.trim().parse::<u64>().unwrap_or(0))
-        .for_each(|num|{
-            dbg!(num);
-        });
+    // Apply operators to each logical column
+    ops.split_whitespace().enumerate().map(|(col_idx, op)| {
+        let vertical_numbers: Vec<u64> = matrix[col_idx]
+            .iter()
+            .map(|s| s.trim().parse::<u64>().unwrap_or(0))
+            .filter(|&n| n > 0)
+            .collect();
 
-    todo!()
+        if vertical_numbers.is_empty() {
+            return 0;
+        }
+
+        vertical_numbers.iter().skip(1).fold(vertical_numbers[0], |acc, &next| {
+            match op {
+                "*" => acc * next,
+                "+" => acc + next,
+                _ => unreachable!()
+            }
+        })
+    }).sum()
 }
 
 pub const SAMPLE_INPUT: &str = "123 328  51 64 
@@ -92,21 +114,11 @@ pub const OPS: &str = "*   +   *   +  ";
 #[cfg(test)]
 mod tests {
     use super::*;
-    // use rstest::rstest;
 
     #[test]
     fn test_part1() {
         assert_eq!(part1(SAMPLE_INPUT, OPS), 4277556);
     }
-
-    // #[rstest]
-    // #[case("64 23 314", "+", 1058)] // 4 + 431 + 623
-    // #[case("51 387 215", "*", 3253600)] // 175 * 581 * 32
-    // #[case("328 64 98", "+", 625)] // 8 + 248 + 369
-    // #[case("123 45 6", "+", 8544)] // 356 * 24 * 1
-    // fn test_cases(#[case] input: &str, #[case] op: &str, #[case] expected: u64) {
-    //     assert_eq!(part2(input, op), expected);
-    // }
 
     #[test]
     fn test_part2() {
