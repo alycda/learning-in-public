@@ -34,7 +34,7 @@ pub fn part1(input: &str) -> usize {
 }
 
 fn count_paths(grid: &Grid<char>, row: usize, col: usize, memo: &mut HashMap<(usize, usize), usize>) -> usize {
-    if row > grid.get_height() {
+    if row >= grid.get_height() {
         return 1;
     }
 
@@ -42,14 +42,14 @@ fn count_paths(grid: &Grid<char>, row: usize, col: usize, memo: &mut HashMap<(us
         return cached;
     }
 
-    let result = match grid.get_at_unbounded(Position::new(row as i32, col as i32)) {
+    let result = match grid.get_at_unbounded(Position::new(col as i32, row as i32)) {
         '^' => {
             let left = if col > 0 {
                 count_paths(grid, row + 1, col - 1, memo)
             } else {
                 0
             };
-            let right = if col + 1 < grid.get_height() {
+            let right = if col + 1 < grid.get_width() {
                 count_paths(grid, row + 1, col + 1, memo)
             } else {
                 0
@@ -67,9 +67,8 @@ pub fn part2(input: &str) -> usize {
     let mut memo = HashMap::new();
     let grid = Grid::<char>::from_str(input).unwrap();
     let start = input.lines().next().unwrap().chars().enumerate().find(|(_idx, c)| *c == 'S').unwrap();
-    memo.insert((0, start.0), 0);
 
-    count_paths(&grid, 0, 1, &mut memo)
+    count_paths(&grid, 0, start.0, &mut memo)
 }
 
 pub const SAMPLE_INPUT: &str = ".......S.......
