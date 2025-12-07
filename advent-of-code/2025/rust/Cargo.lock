@@ -191,7 +191,6 @@ name = "day-07"
 version = "0.0.0"
 dependencies = [
  "aoc-ornaments",
- "rstest",
 ]
 
 [[package]]

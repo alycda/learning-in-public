@@ -8,6 +8,3 @@ ci = []  # Use SAMPLE_INPUT instead of input.txt
 
 [dependencies]
 aoc-ornaments.workspace = true
-
-[dev-dependencies]
-rstest.workspace = true
