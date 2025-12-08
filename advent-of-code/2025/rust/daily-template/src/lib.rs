@@ -17,8 +17,8 @@ mod tests {
         assert_eq!(part1(SAMPLE_INPUT), 0);
     }
 
-    #[test]
-    fn test_part2() {
-        assert_eq!(part2(SAMPLE_INPUT), 0);
-    }
+    // #[test]
+    // fn test_part2() {
+    //     assert_eq!(part2(SAMPLE_INPUT), 0);
+    // }
 }
