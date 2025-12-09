@@ -1,0 +1,16 @@
+[package]
+name = "day-03"
+edition = "2024"
+
+[features]
+default = []
+ci = []  # Use SAMPLE_INPUT instead of input.txt
+regex = ["dep:regex"]
+pcre2 = ["dep:pcre2"]
+
+[dependencies]
+regex = { version = "1", optional = true }
+pcre2 = { version = "0.2", optional = true }
+
+[dev-dependencies]
+rstest.workspace = true
