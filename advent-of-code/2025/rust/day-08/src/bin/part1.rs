@@ -7,6 +7,6 @@ fn main() {
     #[cfg(not(feature = "ci"))]
     let file = include_str!("../../input.txt");
 
-    let result = part1(file);
+    let result = part1(file, 1000);
     println!("{}", result);
 }
