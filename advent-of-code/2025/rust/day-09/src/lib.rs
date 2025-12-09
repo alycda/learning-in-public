@@ -1,7 +1,7 @@
 use glam::IVec2;
 use itertools::Itertools;
 
-pub fn part1(input: &str) -> i32 {
+pub fn part1(input: &str) -> i64 {
     let points: Vec<IVec2> = input.lines().fold(vec![], |mut acc, line| {
         acc.push(IVec2::from_slice(&line.split(',').map(|s| s.parse::<i32>().unwrap()).collect::<Vec<_>>()));
 
@@ -17,17 +17,15 @@ pub fn part1(input: &str) -> i32 {
             let a = pair[0];
             let b = pair[1];
 
-            // Width & height are absolute differences
-            let w = (a.x - b.x).abs();
-            let h = (a.y - b.y).abs();
+            let c = dbg!((a - b).abs());
 
             // Area of the rectangle spanned by a and b
-            let area = w * h;
+            let area:i64 = (c.x as i64 + 1) * (c.y as i64 + 1);
 
             // Return the two opposite corners and the area
             Some((*a, *b, area))
         })
-        .inspect(|pair|{ dbg!(pair); })
+        // .inspect(|pair|{ dbg!(pair); })
         .max_by_key(|(_, _, area)| *area);
     
     dbg!(max).unwrap().2
