@@ -8,9 +8,9 @@ pub fn part1(input: &str) -> i32 {
         acc
     });
 
-    // dbg!(points);
+    // dbg!(&points);
 
-    points
+    let max = points
         .iter()
         .combinations(2)
         .filter_map(|pair| {
@@ -27,7 +27,10 @@ pub fn part1(input: &str) -> i32 {
             // Return the two opposite corners and the area
             Some((*a, *b, area))
         })
-        .max_by_key(|(_, _, area)| *area).unwrap().2
+        .inspect(|pair|{ dbg!(pair); })
+        .max_by_key(|(_, _, area)| *area);
+    
+    dbg!(max).unwrap().2
 }
 
 pub fn part2(input: &str) -> usize {
