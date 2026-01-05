@@ -62,7 +62,7 @@ gen-python: build-lib
 # Test Python bindings
 test-python: gen-python
     @echo "Testing Python bindings..."
-    python3 test_python_bindings.py
+    python3 scripts/test_python_bindings.py
 
 # Compile Kotlin bindings into JAR
 compile-kotlin: gen-kotlin
@@ -73,7 +73,7 @@ compile-kotlin: gen-kotlin
 test-kotlin: compile-kotlin
     @echo "Testing Kotlin bindings..."
     @echo "Note: Requires Kotlin compiler (kotlinc) and JNA library"
-    cd bindings/kotlin && kotlinc -script ../../test_kotlin_bindings.kts -classpath "aoc_ffi_day01.jar:$CLASSPATH"
+    cd bindings/kotlin && kotlinc -script ../../scripts/test_kotlin_bindings.kts -classpath "aoc_ffi_day01.jar:$CLASSPATH"
 
 # Test Swift bindings - simple functions (no Result)
 test-swift-simple:
@@ -83,7 +83,7 @@ test-swift-simple:
         exit 1; \
     fi
     cd bindings/swift && \
-    swiftc -o test_simple ../../test_swift_simple.swift aoc_ffi_day01.swift \
+    swiftc -o test_simple ../../scripts/test_swift_simple.swift aoc_ffi_day01.swift \
         -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && \
     DYLD_LIBRARY_PATH=. ./test_simple && \
     rm -f test_simple
@@ -97,7 +97,7 @@ test-swift-result:
         exit 1; \
     fi
     cd bindings/swift && \
-    swiftc -o test_result ../../test_swift_result.swift aoc_ffi_day01.swift \
+    swiftc -o test_result ../../scripts/test_swift_result.swift aoc_ffi_day01.swift \
         -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && \
     DYLD_LIBRARY_PATH=. ./test_result && \
     rm -f test_result
@@ -111,7 +111,7 @@ test-swift-part1:
         exit 1; \
     fi
     cd bindings/swift && \
-    swiftc -o test_part1 ../../test_swift_part1.swift aoc_ffi_day01.swift \
+    swiftc -o test_part1 ../../scripts/test_swift_part1.swift aoc_ffi_day01.swift \
         -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && \
     DYLD_LIBRARY_PATH=. ./test_part1 && \
     rm -f test_part1
@@ -140,7 +140,7 @@ test-swift:
     @echo "   Use 'just test-swift-part1' for working tests"
     @echo ""
     cd bindings/swift && \
-    swiftc -o test_swift ../../test_swift_bindings.swift aoc_ffi_day01.swift \
+    swiftc -o test_swift ../../scripts/test_swift_bindings.swift aoc_ffi_day01.swift \
         -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && \
     DYLD_LIBRARY_PATH=. ./test_swift && \
     rm -f test_swift
