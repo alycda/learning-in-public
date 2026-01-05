@@ -58,22 +58,26 @@ test-kotlin: compile-kotlin
     @echo "Note: Requires Kotlin compiler (kotlinc) and JNA library"
     cd bindings/kotlin && kotlinc -script ../../test_kotlin_bindings.kts -classpath "aoc_ffi_day01.jar:$CLASSPATH"
 
-# Test Swift bindings (requires swiftc)
-# NOTE: Swift tests are currently non-functional due to nix/Swift SDK incompatibility
-# See SWIFT_LIMITATIONS.md for details
+# Test Swift bindings (requires swiftc, must run OUTSIDE nix-shell)
 test-swift: gen-swift
-    @echo "⚠️  Swift bindings cannot be tested in this nix environment"
+    @echo "Testing Swift bindings..."
+    @echo "Note: Swift tests must run OUTSIDE nix-shell due to SDK compatibility"
+    @if [ -n "$IN_NIX_SHELL" ]; then \
+        echo ""; \
+        echo "⚠️  Error: You are currently IN nix-shell"; \
+        echo "   Please exit nix-shell first, then run:"; \
+        echo "   just test-swift"; \
+        echo ""; \
+        exit 1; \
+    fi
     @echo ""
-    @echo "Reason: The Rust library links against nix GLib, which is incompatible"
-    @echo "        with the system Swift SDK (v6.2.1 vs nix SDK v11.3/Swift 5.4)"
+    cd bindings/swift && \
+    swiftc -o test_swift ../../test_swift_bindings.swift aoc_ffi_day01.swift \
+        -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && \
+    DYLD_LIBRARY_PATH=. ./test_swift && \
+    rm -f test_swift
     @echo ""
-    @echo "What works:"
-    @echo "  ✅ Swift bindings generation (UniFFI creates correct Swift code)"
-    @echo "  ✅ Python bindings (test with: just test-python)"
-    @echo "  ✅ Kotlin bindings (test with: just test-kotlin)"
-    @echo ""
-    @echo "See day-01/SWIFT_LIMITATIONS.md for detailed explanation and solutions"
-    @exit 1
+    @echo "✓ Swift tests completed"
 
 # Generate Kotlin bindings
 gen-kotlin: build-lib
@@ -86,8 +90,13 @@ gen-kotlin: build-lib
     @cp target/release/libaoc_ffi_day01.dylib bindings/kotlin/
     @echo "✓ Kotlin bindings generated in bindings/kotlin/"
 
+# Build library without GLib (for Swift compatibility)
+build-no-glib:
+    @echo "Building library without GLib (for Swift)..."
+    cargo build --release --lib --no-default-features
+
 # Generate Swift bindings
-gen-swift: build-lib
+gen-swift: build-no-glib
     @echo "Generating Swift bindings..."
     @mkdir -p bindings/swift
     uniffi-bindgen generate src/aoc_ffi_day01.udl \
@@ -96,6 +105,7 @@ gen-swift: build-lib
         --out-dir bindings/swift
     @cp target/release/libaoc_ffi_day01.dylib bindings/swift/
     @echo "✓ Swift bindings generated in bindings/swift/"
+    @echo "Note: GLib-based implementation (process_part2_glib) is unavailable"
 
 # Generate all language bindings
 gen-all: gen-python gen-kotlin gen-swift

@@ -53,6 +53,7 @@ struct TestRunner {
         print("\nPart 2: Similarity score")
         print(String(repeating: "-", count: 60))
 
+        // Note: GLib implementation is excluded (requires nix GLib dependency)
         let implementations: [(String, (String) throws -> Int32)] = [
             ("Rust (native)", uniffiProcessPart2),
             ("C-style", uniffiProcessPart2C),
@@ -61,7 +62,7 @@ struct TestRunner {
             ("Real C (count)", uniffiProcessPart2GlibcCount),
             ("Real C (freqmap)", uniffiProcessPart2GlibcFreqmap),
             ("libc crate", uniffiProcessPart2Libc),
-            ("GLib hash table", uniffiProcessPart2Glib),
+            // ("GLib hash table", uniffiProcessPart2Glib),  // Unavailable without glib feature
             ("uthash", uniffiProcessPart2Uthash)
         ]
 

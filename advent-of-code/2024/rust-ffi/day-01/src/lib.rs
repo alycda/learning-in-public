@@ -510,6 +510,7 @@ pub fn process_part2_libc(input: &str) -> Result<i32, AocError> {
 // Using glib-sys - GLib hash table for frequency counting
 // ============================================================================
 
+#[cfg(feature = "glib")]
 use glib_sys::{
     g_hash_table_new, g_hash_table_destroy, g_hash_table_insert,
     g_hash_table_lookup, g_direct_hash, g_direct_equal, gpointer
@@ -517,6 +518,7 @@ use glib_sys::{
 
 // Build frequency map using GLib's GHashTable
 // GHashTable is GLib's hash map implementation (similar to HashMap in Rust)
+#[cfg(feature = "glib")]
 unsafe fn glib_build_freq_map(arr: &[i32]) -> *mut glib_sys::GHashTable {
     unsafe {
         // Create hash table with direct hash (for integer keys stored as pointers)
@@ -548,6 +550,7 @@ unsafe fn glib_build_freq_map(arr: &[i32]) -> *mut glib_sys::GHashTable {
 }
 
 // Lookup frequency in GHashTable
+#[cfg(feature = "glib")]
 unsafe fn glib_get_freq(table: *mut glib_sys::GHashTable, value: i32) -> i32 {
     unsafe {
         let key = value as gpointer;
@@ -562,6 +565,7 @@ unsafe fn glib_get_freq(table: *mut glib_sys::GHashTable, value: i32) -> i32 {
 }
 
 // Part 2 using GLib's hash table
+#[cfg(feature = "glib")]
 pub fn process_part2_glib(input: &str) -> Result<i32, AocError> {
     let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
 
@@ -702,6 +706,7 @@ pub fn uniffi_process_part2_libc(input: String) -> Result<i32, AocError> {
     process_part2_libc(&input)
 }
 
+#[cfg(feature = "glib")]
 #[uniffi::export]
 pub fn uniffi_process_part2_glib(input: String) -> Result<i32, AocError> {
     process_part2_glib(&input)
