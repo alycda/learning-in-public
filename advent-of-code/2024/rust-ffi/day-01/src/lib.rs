@@ -717,4 +717,16 @@ pub fn uniffi_process_part2_uthash(input: String) -> Result<i32, AocError> {
     process_part2_uthash(&input)
 }
 
+// Simple test function that doesn't use Result
+#[uniffi::export]
+pub fn uniffi_test_simple() -> i32 {
+    42
+}
+
+// Test function with string input, no Result
+#[uniffi::export]
+pub fn uniffi_test_echo_length(input: String) -> i32 {
+    input.len() as i32
+}
+
 uniffi::include_scaffolding!("aoc_ffi_day01");

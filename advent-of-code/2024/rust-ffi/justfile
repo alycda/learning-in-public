@@ -75,10 +75,52 @@ test-kotlin: compile-kotlin
     @echo "Note: Requires Kotlin compiler (kotlinc) and JNA library"
     cd bindings/kotlin && kotlinc -script ../../test_kotlin_bindings.kts -classpath "aoc_ffi_day01.jar:$CLASSPATH"
 
-# Test Swift bindings (requires swiftc, must run OUTSIDE nix-shell)
+# Test Swift bindings - simple functions (no Result)
+test-swift-simple:
+    @echo "Testing Swift simple functions..."
+    @if [ ! -f "bindings/swift/aoc_ffi_day01.swift" ]; then \
+        echo "⚠️  Error: Swift bindings not found. Run 'just gen-swift' in nix-shell first."; \
+        exit 1; \
+    fi
+    cd bindings/swift && \
+    swiftc -o test_simple ../../test_swift_simple.swift aoc_ffi_day01.swift \
+        -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && \
+    DYLD_LIBRARY_PATH=. ./test_simple && \
+    rm -f test_simple
+    @echo "✓ Swift simple tests passed"
+
+# Test Swift bindings - Result-returning functions
+test-swift-result:
+    @echo "Testing Swift Result functions..."
+    @if [ ! -f "bindings/swift/aoc_ffi_day01.swift" ]; then \
+        echo "⚠️  Error: Swift bindings not found. Run 'just gen-swift' in nix-shell first."; \
+        exit 1; \
+    fi
+    cd bindings/swift && \
+    swiftc -o test_result ../../test_swift_result.swift aoc_ffi_day01.swift \
+        -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && \
+    DYLD_LIBRARY_PATH=. ./test_result && \
+    rm -f test_result
+    @echo "✓ Swift Result tests passed"
+
+# Test Swift bindings - Part 1 implementations
+test-swift-part1:
+    @echo "Testing Swift Part 1 implementations..."
+    @if [ ! -f "bindings/swift/aoc_ffi_day01.swift" ]; then \
+        echo "⚠️  Error: Swift bindings not found. Run 'just gen-swift' in nix-shell first."; \
+        exit 1; \
+    fi
+    cd bindings/swift && \
+    swiftc -o test_part1 ../../test_swift_part1.swift aoc_ffi_day01.swift \
+        -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && \
+    DYLD_LIBRARY_PATH=. ./test_part1 && \
+    rm -f test_part1
+    @echo "✓ Swift Part 1 tests passed"
+
+# Test Swift bindings - FULL TEST (currently crashes on Part 2)
 # Run 'just gen-swift' in nix-shell FIRST to generate bindings
 test-swift:
-    @echo "Testing Swift bindings..."
+    @echo "Testing Swift bindings (FULL TEST)..."
     @if [ -n "${IN_NIX_SHELL:-}" ]; then \
         echo ""; \
         echo "⚠️  Error: Swift tests must run OUTSIDE nix-shell"; \
@@ -94,6 +136,8 @@ test-swift:
         exit 1; \
     fi
     @echo "Note: GLib-based implementation is excluded from Swift tests"
+    @echo "⚠️  WARNING: Full test currently crashes on Part 2"
+    @echo "   Use 'just test-swift-part1' for working tests"
     @echo ""
     cd bindings/swift && \
     swiftc -o test_swift ../../test_swift_bindings.swift aoc_ffi_day01.swift \
