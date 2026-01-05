@@ -8,6 +8,23 @@ default:
 watch:
     bacon
 
+# Show the FFI learning presentation (requires presenterm in nix-shell)
+present:
+    #!/usr/bin/env bash
+    cd ..
+    if [ -n "${IN_NIX_SHELL:-}" ]; then
+        presenterm ffi-learning-presentation.md
+    else
+        echo "Note: Running outside nix-shell, using system presenterm if available"
+        if command -v presenterm &> /dev/null; then
+            presenterm ffi-learning-presentation.md
+        else
+            echo "Error: presenterm not found."
+            echo "Please run: nix-shell --run 'just present'"
+            exit 1
+        fi
+    fi
+
 # Run benchmarks
 bench:
     cargo bench

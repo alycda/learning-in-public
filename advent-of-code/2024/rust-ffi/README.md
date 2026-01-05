@@ -4,6 +4,19 @@ A learning project exploring Foreign Function Interfaces (FFI) in both direction
 - **Rust → C**: 9 different FFI implementations calling C functions from Rust
 - **Rust → Other Languages**: UniFFI bindings for Python, Kotlin, and Swift
 
+## 📊 Presentation
+
+View the complete FFI learning journey:
+```bash
+nix-shell
+just present
+```
+
+Or manually with presenterm:
+```bash
+presenterm ffi-learning-presentation.md
+```
+
 ## UniFFI Language Bindings
 
 This project uses [UniFFI](https://mozilla.github.io/uniffi-rs/) to generate bindings from Rust to other languages:
