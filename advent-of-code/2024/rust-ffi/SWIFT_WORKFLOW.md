@@ -1,8 +1,10 @@
 # Swift Bindings Workflow
 
+⚠️ **Note**: Swift bindings generate successfully but do not currently run. See [SWIFT_LIMITATIONS.md](day-01/SWIFT_LIMITATIONS.md) for details.
+
 The Swift bindings require a special workflow due to SDK incompatibility between nix and system Swift.
 
-## Quick Start
+## Attempted Workflow
 
 ```bash
 # Step 1: Generate bindings (IN nix-shell)
@@ -10,7 +12,7 @@ nix-shell
 just gen-swift
 exit
 
-# Step 2: Test bindings (OUTSIDE nix-shell)
+# Step 2: Test bindings (OUTSIDE nix-shell) - Currently fails with segmentation fault
 just test-swift
 ```
 
@@ -61,42 +63,18 @@ This creates:
 
 ### Outside Nix-Shell (Testing)
 
+⚠️ **Currently fails with segmentation fault (exit code 139)**
+
 ```bash
 $ exit  # Exit nix-shell
 $ just test-swift
 Testing Swift bindings...
 Note: GLib-based implementation is excluded from Swift tests
 
-Testing Advent of Code 2024 Day 1 - Swift Bindings
-
-============================================================
-
-Part 1: Sum of absolute differences
-------------------------------------------------------------
-  Rust (native):      11
-  C (manual FFI):     11
-  libc crate:         11
-
-  ✓ All Part 1 implementations return 11
-
-Part 2: Similarity score
-------------------------------------------------------------
-  Rust (native)             31
-  C-style                   31
-  Binary search             31
-  FreqMap (simulated)       31
-  Real C (count)            31
-  Real C (freqmap)          31
-  libc crate                31
-  uthash                    31
-
-  ✓ All Part 2 implementations return 31
-
-============================================================
-✓ All tests passed!
-
-✓ Swift tests completed
+error: Recipe `test-swift` failed on line 85 with exit code 139
 ```
+
+The Swift test compiles successfully but crashes at runtime. This appears to be a deeper incompatibility issue between the Rust dylib built in the nix environment and the Swift runtime, even when building without GLib.
 
 ## Troubleshooting
 
