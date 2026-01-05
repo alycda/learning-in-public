@@ -1,5 +1,6 @@
 use std::ffi::c_void;
 use std::os::raw::c_int;
+use libc::{qsort as libc_qsort, bsearch as libc_bsearch};
 
 // Trait for different sorting strategies
 pub trait Sorter {
@@ -415,4 +416,92 @@ pub fn process_part2_glibc_freqmap(input: &str) -> Result<i32, String> {
     unsafe { freqmap_free(freq_map); }
 
     Ok(result)
+}
+
+// ============================================================================
+// Using libc crate - pre-made FFI bindings to C standard library
+// ============================================================================
+
+// Wrapper that uses libc crate's qsort instead of our manual declaration
+fn libc_crate_qsort(vec: &mut Vec<i32>) {
+    unsafe {
+        libc_qsort(
+            vec.as_mut_ptr() as *mut c_void,
+            vec.len(),
+            std::mem::size_of::<i32>(),
+            Some(compare_i32)  // libc crate uses Option<fn>
+        );
+    }
+}
+
+// Part 1 using libc crate's qsort
+pub fn process_part1_libc(input: &str) -> Result<i32, String> {
+    let (mut left, mut right): (Vec<i32>, Vec<i32>) = unzip(input);
+
+    // Sort using libc crate's qsort
+    libc_crate_qsort(&mut left);
+    libc_crate_qsort(&mut right);
+
+    Ok(left
+        .iter()
+        .zip(right.iter())
+        .map(|(l, r)| (l-r).abs())
+        .sum::<i32>()
+    )
+}
+
+// Binary search using libc crate's bsearch
+unsafe fn libc_crate_bsearch_count(sorted_arr: *const i32, len: usize, target: i32) -> usize {
+    if len == 0 {
+        return 0;
+    }
+
+    unsafe {
+        let found = libc_bsearch(
+            &target as *const i32 as *const c_void,
+            sorted_arr as *const c_void,
+            len,
+            std::mem::size_of::<i32>(),
+            Some(compare_i32)  // libc crate uses Option<fn>
+        );
+
+        if found.is_null() {
+            return 0;
+        }
+
+        let found_ptr = found as *const i32;
+
+        // Count backwards to find first occurrence
+        let mut first = found_ptr;
+        while first > sorted_arr && *first.offset(-1) == target {
+            first = first.offset(-1);
+        }
+
+        // Count forwards to find last occurrence
+        let end_ptr = sorted_arr.add(len);
+        let mut last = found_ptr;
+        while last < end_ptr.offset(-1) && *last.offset(1) == target {
+            last = last.offset(1);
+        }
+
+        (last.offset_from(first) + 1) as usize
+    }
+}
+
+// Part 2 using libc crate's bsearch
+pub fn process_part2_libc(input: &str) -> Result<i32, String> {
+    let (left, mut right): (Vec<i32>, Vec<i32>) = unzip(input);
+
+    // Sort with libc's qsort
+    libc_crate_qsort(&mut right);
+
+    Ok(left
+        .iter()
+        .map(|n| {
+            let count = unsafe {
+                libc_crate_bsearch_count(right.as_ptr(), right.len(), *n)
+            };
+            n * count as i32
+        })
+        .sum())
 }
