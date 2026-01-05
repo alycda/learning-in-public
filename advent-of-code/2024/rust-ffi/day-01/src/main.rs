@@ -2,7 +2,7 @@
 //!
 //! see the README for more info
 
-use day_01::{process_part1, process_part2, process_part1_c, SAMPLE_INPUT};
+use day_01::{process_part1, process_part2, process_part1_c, process_part2_c, SAMPLE_INPUT};
 
 fn main() {
     println!("2024 Day 1");
@@ -13,7 +13,10 @@ fn main() {
     println!("Part 1: {}/{}", process_part1(SAMPLE_INPUT).unwrap(), process_part1_c(SAMPLE_INPUT).unwrap());
 
     let part2 = process_part2(SAMPLE_INPUT).unwrap();
+    let part2_c = process_part2_c(SAMPLE_INPUT).unwrap();
     assert_eq!(part2, 31);
+    assert_eq!(part2_c, 31);
+    assert_eq!(part2, part2_c);
 
-    println!("Part 2: {}", part2)
+    println!("Part 2: {}/{}", part2, part2_c)
 }

@@ -18,3 +18,11 @@ The comparison function bridges the gap:
 - You provide the semantic comparison logic for that type
 
 This is why Rust's `.sort(`) is so much nicer - it uses generics and the `Ord` trait, so the compiler generates the right comparison code automatically. C's `qsort` makes you do this manually, which is more error-prone but also shows you exactly what's happening under the hood!
+
+
+### Counting with C (pointer arithmetic)
+
+- Passing array pointers across FFI boundary
+- Manual length tracking (C doesn't have slices)
+- Pointer arithmetic with .add()
+- Safe wrapper pattern

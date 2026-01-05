@@ -121,11 +121,43 @@ pub fn process_part1_c(input: &str) -> Result<i32, String> {
     solve::<CSort>(input)
 }
 
+// Manual C-style count function (simulating a C implementation)
+// In a real FFI scenario, this would be in a .c file and linked
+unsafe fn c_count_occurrences(arr: *const i32, len: usize, target: i32) -> usize {
+    let mut count = 0;
+    // SAFETY: Caller guarantees arr points to len valid i32 elements
+    unsafe {
+        for i in 0..len {
+            if *arr.add(i) == target {
+                count += 1;
+            }
+        }
+    }
+    count
+}
+
+// Wrapper that safely calls the C-style count function
+fn count_with_c(vec: &[i32], target: i32) -> usize {
+    unsafe {
+        c_count_occurrences(vec.as_ptr(), vec.len(), target)
+    }
+}
+
 pub fn process_part2(input: &str) -> Result<i32, String> {
     let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
 
     Ok(left
         .iter()
         .map(|n| n * right.iter().filter(|&x| x==n).count() as i32)
+        .sum())
+}
+
+// Part 2 using C-style counting via FFI
+pub fn process_part2_c(input: &str) -> Result<i32, String> {
+    let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
+
+    Ok(left
+        .iter()
+        .map(|n| n * count_with_c(&right, *n) as i32)
         .sum())
 }
