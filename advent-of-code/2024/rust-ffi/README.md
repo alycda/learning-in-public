@@ -28,12 +28,15 @@ This project uses [UniFFI](https://mozilla.github.io/uniffi-rs/) to generate bin
 - **Kotlin**: All 12 implementations working
   - Test: `just test-kotlin` (in nix-shell)
 
-### ✅ Swift - Now Working!
+### ✅ Swift - Fully Working!
 
 - **Swift**: All 11 implementations working (GLib excluded for compatibility)
   - Generate: `just gen-swift` (in nix-shell)
-  - Test: `just test-swift` (OUTSIDE nix-shell)
-  - **Breakthrough**: Fixed by downgrading `thiserror` to 1.0 and avoiding C-style format strings
+  - Test: `just test-swift` (works in nix-shell AND outside!)
+  - **Breakthroughs**:
+    - Fixed segfaults by downgrading `thiserror` to 1.0
+    - Fixed C-style format string crashes
+    - Fixed nix SDK incompatibility with `env -u SDKROOT -u DEVELOPER_DIR`
   - See [SWIFT_BREAKTHROUGH.md](./docs/SWIFT_BREAKTHROUGH.md) for the full story
 
 ## Development Environment
