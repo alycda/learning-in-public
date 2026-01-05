@@ -100,7 +100,9 @@ jobs:
           toolchain: stable
 
       - name: Install uniffi-bindgen
-        run: cargo install --git https://github.com/mozilla/uniffi-rs --tag v0.28.3 uniffi-bindgen
+        run: |
+          cargo install --git https://github.com/mozilla/uniffi-rs --tag v0.28.3 --bin uniffi-bindgen \
+            --root ~/.cargo uniffi-bindgen-cli
 
       - name: Cache Cargo dependencies
         uses: actions/cache@v4
@@ -172,7 +174,9 @@ jobs:
           toolchain: stable
 
       - name: Install uniffi-bindgen
-        run: cargo install --git https://github.com/mozilla/uniffi-rs --tag v0.28.3 uniffi-bindgen
+        run: |
+          cargo install --git https://github.com/mozilla/uniffi-rs --tag v0.28.3 --bin uniffi-bindgen \
+            --root ~/.cargo uniffi-bindgen-cli
 
       - name: Cache Cargo dependencies
         uses: actions/cache@v4
@@ -226,7 +230,9 @@ jobs:
           toolchain: stable
 
       - name: Install uniffi-bindgen
-        run: cargo install --git https://github.com/mozilla/uniffi-rs --tag v0.28.3 uniffi-bindgen
+        run: |
+          cargo install --git https://github.com/mozilla/uniffi-rs --tag v0.28.3 --bin uniffi-bindgen \
+            --root ~/.cargo uniffi-bindgen-cli
 
       - name: Cache Cargo dependencies
         uses: actions/cache@v4
