@@ -10,8 +10,6 @@
  *   kotlinc -script ../../test_kotlin_bindings.kts -classpath .
  */
 
-@file:CompilerOptions("-jvm-target", "1.8")
-
 import uniffi.aoc_ffi_day01.uniffiProcessPart1
 import uniffi.aoc_ffi_day01.uniffiProcessPart1C
 import uniffi.aoc_ffi_day01.uniffiProcessPart1Libc

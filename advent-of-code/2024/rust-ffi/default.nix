@@ -15,8 +15,6 @@ pkgs.mkShell {
     python3Packages.virtualenv
     # Kotlin for testing Kotlin bindings
     kotlin
-    # JNA (Java Native Access) for Kotlin UniFFI bindings
-    javaPackages.jna
     # Swift for testing Swift bindings (macOS has built-in Swift)
     # swift is available on macOS by default
   ];
@@ -38,8 +36,19 @@ pkgs.mkShell {
       pip install --quiet uniffi-bindgen==0.28.3
     fi
 
+    # Download JNA for Kotlin UniFFI bindings if not present
+    JNA_DIR="$HOME/.m2/repository/net/java/dev/jna/jna/5.13.0"
+    JNA_JAR="$JNA_DIR/jna-5.13.0.jar"
+
+    if [ ! -f "$JNA_JAR" ]; then
+      echo "Downloading JNA library..."
+      mkdir -p "$JNA_DIR"
+      curl -L -o "$JNA_JAR" https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar
+      echo "✓ JNA library downloaded"
+    fi
+
     # Set CLASSPATH for Kotlin JNA dependency
-    export CLASSPATH="${pkgs.javaPackages.jna}/share/java/jna.jar:$CLASSPATH"
+    export CLASSPATH="$JNA_JAR:$CLASSPATH"
 
     echo "✓ Rust FFI development environment ready"
     echo "  - Rust toolchain with FFI support"
