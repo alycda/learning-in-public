@@ -10,7 +10,21 @@
  *   kotlinc -script ../../test_kotlin_bindings.kts -classpath .
  */
 
-import uniffi.aoc_ffi_day01.*
+@file:CompilerOptions("-jvm-target", "1.8")
+
+import uniffi.aoc_ffi_day01.uniffiProcessPart1
+import uniffi.aoc_ffi_day01.uniffiProcessPart1C
+import uniffi.aoc_ffi_day01.uniffiProcessPart1Libc
+import uniffi.aoc_ffi_day01.uniffiProcessPart2
+import uniffi.aoc_ffi_day01.uniffiProcessPart2C
+import uniffi.aoc_ffi_day01.uniffiProcessPart2Bsearch
+import uniffi.aoc_ffi_day01.uniffiProcessPart2Freqmap
+import uniffi.aoc_ffi_day01.uniffiProcessPart2GlibcCount
+import uniffi.aoc_ffi_day01.uniffiProcessPart2GlibcFreqmap
+import uniffi.aoc_ffi_day01.uniffiProcessPart2Libc
+import uniffi.aoc_ffi_day01.uniffiProcessPart2Glib
+import uniffi.aoc_ffi_day01.uniffiProcessPart2Uthash
+import uniffi.aoc_ffi_day01.AocException
 
 val SAMPLE_INPUT = """3   4
 4   3
@@ -42,7 +56,7 @@ fun main() {
         }
         println("\n  ✓ All Part 1 implementations return 11")
 
-    } catch (e: AocError) {
+    } catch (e: AocException) {
         println("  ✗ Error: ${e.message}")
         return
     }
@@ -69,7 +83,7 @@ fun main() {
             val result = func(SAMPLE_INPUT)
             results.add(result)
             println("  %-25s %d".format(name, result))
-        } catch (e: AocError) {
+        } catch (e: AocException) {
             println("  %-25s Error: ${e.message}".format(name))
             return
         }
