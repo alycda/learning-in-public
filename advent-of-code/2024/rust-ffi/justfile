@@ -1,10 +1,83 @@
 set working-directory := 'day-01'
 
+# Default recipe - show available commands
+default:
+    @just --list
+
+# Watch and rebuild on changes
 watch:
     bacon
 
+# Run benchmarks
 bench:
     cargo bench
 
+# Build Rust library
 build:
     cargo build --release
+
+# Build library only (no binary)
+build-lib:
+    cargo build --release --lib
+
+# Run the Rust binary (tests all FFI implementations)
+run:
+    cargo run --release
+
+# Clean build artifacts
+clean:
+    cargo clean
+    rm -rf bindings/
+
+# === UniFFI Bindings ===
+
+# Generate Python bindings
+gen-python: build-lib
+    @echo "Generating Python bindings..."
+    @mkdir -p bindings/python
+    uniffi-bindgen generate src/aoc_ffi_day01.udl \
+        --lib-file target/release/libaoc_ffi_day01.dylib \
+        --language python \
+        --out-dir bindings/python
+    @cp target/release/libaoc_ffi_day01.dylib bindings/python/
+    @echo "✓ Python bindings generated in bindings/python/"
+
+# Test Python bindings
+test-python: gen-python
+    @echo "Testing Python bindings..."
+    python3 test_python_bindings.py
+
+# Generate Kotlin bindings
+gen-kotlin: build-lib
+    @echo "Generating Kotlin bindings..."
+    @mkdir -p bindings/kotlin
+    uniffi-bindgen generate src/aoc_ffi_day01.udl \
+        --lib-file target/release/libaoc_ffi_day01.dylib \
+        --language kotlin \
+        --out-dir bindings/kotlin
+    @cp target/release/libaoc_ffi_day01.dylib bindings/kotlin/
+    @echo "✓ Kotlin bindings generated in bindings/kotlin/"
+
+# Generate Swift bindings
+gen-swift: build-lib
+    @echo "Generating Swift bindings..."
+    @mkdir -p bindings/swift
+    uniffi-bindgen generate src/aoc_ffi_day01.udl \
+        --lib-file target/release/libaoc_ffi_day01.dylib \
+        --language swift \
+        --out-dir bindings/swift
+    @cp target/release/libaoc_ffi_day01.dylib bindings/swift/
+    @echo "✓ Swift bindings generated in bindings/swift/"
+
+# Generate all language bindings
+gen-all: gen-python gen-kotlin gen-swift
+    @echo "✓ All bindings generated!"
+
+# Show binding generation status
+bindings-status:
+    @echo "Binding generation status:"
+    @echo "  Python:  $([ -d bindings/python ] && echo '✓ Generated' || echo '✗ Not generated')"
+    @echo "  Kotlin:  $([ -d bindings/kotlin ] && echo '✓ Generated' || echo '✗ Not generated')"
+    @echo "  Swift:   $([ -d bindings/swift ] && echo '✓ Generated' || echo '✗ Not generated')"
+    @echo ""
+    @echo "Run 'just gen-all' to generate all bindings"

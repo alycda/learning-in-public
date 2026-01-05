@@ -179,3 +179,95 @@ This is why Rust's `.sort(`) is so much nicer - it uses generics and the `Ord` t
 - Original: O(n²) - for each left element, scan entire right array
 - Linear count: O(n²) - same complexity, just using C
 - Binary search: O(n log n + n*k) where k = avg occurrences - much better for large arrays!
+
+---
+
+## UniFFI: Multi-Language Bindings
+
+This project uses **UniFFI** to generate bindings for Python, Kotlin, and Swift, allowing you to call all 9 FFI implementations from other languages!
+
+### Quick Start
+
+```bash
+# Enter nix shell (sets up Python + uniffi-bindgen automatically)
+nix-shell
+
+# Generate and test Python bindings
+just test-python
+
+# Or generate all bindings at once
+just gen-all
+```
+
+### Manual Setup (without Nix)
+
+```bash
+# Install uniffi-bindgen
+pip install uniffi-bindgen==0.28.3
+
+# Generate Python bindings
+just gen-python
+
+# Generate Kotlin bindings
+just gen-kotlin
+
+# Generate Swift bindings
+just gen-swift
+```
+
+### Using from Python
+
+```python
+import sys
+sys.path.insert(0, 'bindings/python')
+import aoc_ffi_day01
+
+# All 9 FFI implementations available!
+result = aoc_ffi_day01.uniffi_process_part2_uthash("3   4\n4   3\n2   5")
+print(f"Result: {result}")  # Result: 31
+```
+
+### Available Functions
+
+All functions accept a `String` input and return `Result<i32, AocError>`:
+
+**Part 1 (sorting):**
+- `uniffi_process_part1()` - Pure Rust
+- `uniffi_process_part1_c()` - Manual FFI qsort
+- `uniffi_process_part1_libc()` - libc crate
+
+**Part 2 (frequency counting):**
+- `uniffi_process_part2()` - Pure Rust
+- `uniffi_process_part2_c()` - C-style pointer iteration
+- `uniffi_process_part2_bsearch()` - Binary search with bsearch
+- `uniffi_process_part2_freqmap()` - Simulated C malloc/free
+- `uniffi_process_part2_glibc_count()` - Real C code (linear count)
+- `uniffi_process_part2_glibc_freqmap()` - Real C code (frequency map)
+- `uniffi_process_part2_libc()` - libc crate bsearch
+- `uniffi_process_part2_glib()` - GLib GHashTable
+- `uniffi_process_part2_uthash()` - uthash header-only library
+
+### Architecture
+
+```
+┌─────────────────────────────────────┐
+│   Python / Kotlin / Swift Code      │
+└──────────────┬──────────────────────┘
+               │ UniFFI generated bindings
+┌──────────────▼──────────────────────┐
+│   Rust Wrapper Functions            │
+│   (#[uniffi::export])                │
+└──────────────┬──────────────────────┘
+               │
+┌──────────────▼──────────────────────┐
+│   Core Rust FFI Implementations     │
+│   (9 different approaches)           │
+└──────────────┬──────────────────────┘
+               │
+┌──────────────▼──────────────────────┐
+│   C Libraries                        │
+│   (qsort, bsearch, GLib, uthash)    │
+└─────────────────────────────────────┘
+```
+
+See [UNIFFI_SETUP.md](UNIFFI_SETUP.md) for detailed setup instructions.
