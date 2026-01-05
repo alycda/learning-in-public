@@ -7,7 +7,7 @@ use day_01::{
     process_part2_bsearch, process_part2_freqmap,
     process_part2_glibc_count, process_part2_glibc_freqmap,
     process_part1_libc, process_part2_libc,
-    process_part2_glib,
+    process_part2_glib, process_part2_uthash,
     SAMPLE_INPUT
 };
 
@@ -34,6 +34,7 @@ fn main() {
     let part2_glibc_freqmap = process_part2_glibc_freqmap(SAMPLE_INPUT).unwrap();
     let part2_libc = process_part2_libc(SAMPLE_INPUT).unwrap();
     let part2_glib = process_part2_glib(SAMPLE_INPUT).unwrap();
+    let part2_uthash = process_part2_uthash(SAMPLE_INPUT).unwrap();
 
     assert_eq!(part2, 31);
     assert_eq!(part2_c, 31);
@@ -43,6 +44,7 @@ fn main() {
     assert_eq!(part2_glibc_freqmap, 31);
     assert_eq!(part2_libc, 31);
     assert_eq!(part2_glib, 31);
+    assert_eq!(part2_uthash, 31);
 
     println!("\nPart 2:");
     println!("  Rust:            {}", part2);
@@ -53,4 +55,5 @@ fn main() {
     println!("  Real C freqmap:  {}", part2_glibc_freqmap);
     println!("  libc crate:      {}", part2_libc);
     println!("  GLib hash table: {}", part2_glib);
+    println!("  uthash:          {}", part2_uthash);
 }

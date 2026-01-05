@@ -583,3 +583,47 @@ pub fn process_part2_glib(input: &str) -> Result<i32, String> {
         Ok(result)
     }
 }
+
+// ============================================================================
+// Using uthash - header-only C hash table library
+// ============================================================================
+
+// Opaque pointer to uthash frequency table
+#[repr(C)]
+struct UthashFreqTable {
+    _private: [u8; 0],
+}
+
+// External functions from uthash wrapper
+unsafe extern "C" {
+    fn uthash_create_freq_table(arr: *const i32, len: usize) -> *mut UthashFreqTable;
+    fn uthash_get_freq(table: *mut UthashFreqTable, value: i32) -> i32;
+    fn uthash_free_table(table: *mut UthashFreqTable);
+}
+
+// Part 2 using uthash
+pub fn process_part2_uthash(input: &str) -> Result<i32, String> {
+    let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
+
+    unsafe {
+        // Build frequency table using uthash
+        let freq_table = uthash_create_freq_table(right.as_ptr(), right.len());
+
+        if freq_table.is_null() {
+            return Err("Failed to create uthash table".to_string());
+        }
+
+        let result = left
+            .iter()
+            .map(|n| {
+                let count = uthash_get_freq(freq_table, *n);
+                n * count
+            })
+            .sum();
+
+        // Clean up uthash table
+        uthash_free_table(freq_table);
+
+        Ok(result)
+    }
+}

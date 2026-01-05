@@ -39,16 +39,89 @@ cargo run
 
 ## FFI Approaches Demonstrated
 
-This project shows 8+ different ways to interact with C code from Rust:
+This project demonstrates **9 different FFI patterns** for interacting with C code from Rust:
 
-1. **Manual FFI declarations** - Writing `extern "C"` blocks yourself
-2. **libc crate** - Using pre-made bindings to C standard library
-3. **glib-sys crate** - Using pre-made bindings to GLib (GNOME C library)
-4. **Custom C code** - Compiling and linking your own C files
-5. **C qsort** - Function pointers and callbacks
-6. **C bsearch** - Binary search with pointer arithmetic
-7. **C malloc/free** - Manual memory management across FFI boundary
-8. **GLib GHashTable** - Using external C library data structures
+### Part 1: Sorting Implementations
+
+1. **Pure Rust Baseline** (`process_part1`)
+   - Native Rust `.sort()` using timsort
+   - Baseline for comparison
+
+2. **Manual FFI - qsort** (`process_part1_c`)
+   - Hand-written `extern "C"` block declaring `qsort`
+   - Function pointers and C callbacks
+   - Demonstrates: raw FFI, unsafe blocks, pointer casting
+
+3. **libc crate - qsort** (`process_part1_libc`)
+   - Using pre-made bindings from `libc` crate
+   - Shows: community-maintained FFI bindings
+   - Note: `libc` wraps function pointers in `Option<fn>`
+
+### Part 2: Frequency Counting Implementations
+
+4. **C-style Simulation** (`process_part2_c`)
+   - Rust code mimicking C patterns
+   - Manual pointer iteration with `.add()`
+   - Demonstrates: C-style loops without actual FFI
+
+5. **Binary Search with bsearch** (`process_part2_bsearch`)
+   - Uses C's `bsearch` stdlib function
+   - Manual pointer arithmetic to count range
+   - Demonstrates: `.offset()`, `.offset_from()`, null pointer handling
+   - Complexity: O(n log n + n*k) vs O(n²)
+
+6. **Simulated Frequency Map** (`process_part2_freqmap`)
+   - Rust implementation using `std::alloc`
+   - Simulates C's `malloc`/`calloc`/`free`
+   - Demonstrates: `Layout::array()`, manual memory management
+
+7. **Real C Code - Custom Library** (`process_part2_glibc_count`, `process_part2_glibc_freqmap`)
+   - Actual compiled C code from `aoc_ffi.c`
+   - Build script compiles and links C files
+   - Demonstrates: `cc` crate, `build.rs`, `#[repr(C)]` structs
+   - Files: `aoc_ffi.h`, `aoc_ffi.c`
+
+8. **GLib Hash Table** (`process_part2_glib`)
+   - Using `glib-sys` crate for GLib bindings
+   - GLib's `GHashTable` for frequency counting
+   - Demonstrates: external system library FFI, `pkg-config` integration
+   - Requires: GLib installed (via nix-shell or system package manager)
+
+9. **uthash - Header-Only Library** (`process_part2_uthash`)
+   - Vendored header-only C library in `vendor/uthash.h`
+   - Custom C wrapper to expose uthash macros as functions
+   - Demonstrates: vendoring C libraries, opaque pointers, zero-sized types
+   - Files: `uthash_wrapper.h`, `uthash_wrapper.c`
+   - No external dependencies needed!
+
+---
+
+## Key FFI Concepts Covered
+
+### Memory Management
+- Raw pointer manipulation (`.as_ptr()`, `.as_mut_ptr()`)
+- Pointer arithmetic (`.add()`, `.offset()`, `.offset_from()`)
+- Manual allocation (`std::alloc::alloc_zeroed()`, `malloc`/`calloc`)
+- Manual deallocation (`std::alloc::dealloc()`, `free()`)
+- Null pointer checking (`.is_null()`)
+
+### Type Safety
+- `#[repr(C)]` for C-compatible struct layout
+- Opaque pointers with zero-sized types
+- Function pointers and callbacks
+- `unsafe extern "C"` blocks
+
+### Build Integration
+- `build.rs` with `cc` crate for compiling C code
+- `.include()` for header directories
+- `cargo:rerun-if-changed` for incremental builds
+- Vendoring external C libraries
+
+### External Libraries
+- System libraries via `-sys` crates (`libc`, `glib-sys`)
+- `pkg-config` for finding system libraries
+- Header-only libraries (uthash)
+- Custom C code compilation
 
 ---
 
