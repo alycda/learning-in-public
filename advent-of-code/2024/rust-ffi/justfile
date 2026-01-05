@@ -83,7 +83,7 @@ test-swift-simple:
         exit 1; \
     fi
     cd bindings/swift && \
-    swiftc -o test_simple ../../tests/swift/test_swift_simple.swift aoc_ffi_day01.swift \
+    env -u SDKROOT -u DEVELOPER_DIR swiftc -o test_simple ../../tests/swift/test_swift_simple.swift aoc_ffi_day01.swift \
         -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && \
     DYLD_LIBRARY_PATH=. ./test_simple && \
     rm -f test_simple
@@ -97,7 +97,7 @@ test-swift-result:
         exit 1; \
     fi
     cd bindings/swift && \
-    swiftc -o test_result ../../tests/swift/test_swift_result.swift aoc_ffi_day01.swift \
+    env -u SDKROOT -u DEVELOPER_DIR swiftc -o test_result ../../tests/swift/test_swift_result.swift aoc_ffi_day01.swift \
         -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && \
     DYLD_LIBRARY_PATH=. ./test_result && \
     rm -f test_result
@@ -111,7 +111,7 @@ test-swift-part1:
         exit 1; \
     fi
     cd bindings/swift && \
-    swiftc -o test_part1 ../../tests/swift/test_swift_part1.swift aoc_ffi_day01.swift \
+    env -u SDKROOT -u DEVELOPER_DIR swiftc -o test_part1 ../../tests/swift/test_swift_part1.swift aoc_ffi_day01.swift \
         -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && \
     DYLD_LIBRARY_PATH=. ./test_part1 && \
     rm -f test_part1
@@ -121,13 +121,6 @@ test-swift-part1:
 # Run 'just gen-swift' in nix-shell FIRST to generate bindings
 test-swift:
     @echo "Testing Swift bindings (FULL TEST)..."
-    @if [ -n "${IN_NIX_SHELL:-}" ]; then \
-        echo ""; \
-        echo "⚠️  Error: Swift tests must run OUTSIDE nix-shell"; \
-        echo "   Exit nix-shell first, then run: just test-swift"; \
-        echo ""; \
-        exit 1; \
-    fi
     @if [ ! -f "bindings/swift/aoc_ffi_day01.swift" ]; then \
         echo ""; \
         echo "⚠️  Error: Swift bindings not found"; \
@@ -136,11 +129,8 @@ test-swift:
         exit 1; \
     fi
     @echo "Note: GLib-based implementation is excluded from Swift tests"
-    @echo "⚠️  WARNING: Full test all implementations"
-    @echo "   Use 'just test-swift-part1' for working tests"
-    @echo ""
     cd bindings/swift && \
-    swiftc -o test_swift ../../tests/swift/test_swift_bindings.swift aoc_ffi_day01.swift \
+    env -u SDKROOT -u DEVELOPER_DIR swiftc -o test_swift ../../tests/swift/test_swift_bindings.swift aoc_ffi_day01.swift \
         -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && \
     DYLD_LIBRARY_PATH=. ./test_swift && \
     rm -f test_swift
