@@ -34,7 +34,7 @@ This project uses [UniFFI](https://mozilla.github.io/uniffi-rs/) to generate bin
   - Generate: `just gen-swift` (in nix-shell)
   - Test: `just test-swift` (OUTSIDE nix-shell)
   - **Breakthrough**: Fixed by downgrading `thiserror` to 1.0 and avoiding C-style format strings
-  - See [SWIFT_BREAKTHROUGH.md](SWIFT_BREAKTHROUGH.md) for the full story
+  - See [SWIFT_BREAKTHROUGH.md](./docs/SWIFT_BREAKTHROUGH.md) for the full story
 
 ## Development Environment
 

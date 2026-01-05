@@ -270,4 +270,4 @@ All functions accept a `String` input and return `Result<i32, AocError>`:
 └─────────────────────────────────────┘
 ```
 
-See [UNIFFI_SETUP.md](UNIFFI_SETUP.md) for detailed setup instructions.
+See [UNIFFI_SETUP.md](./docs/UNIFFI_SETUP.md) for detailed setup instructions.

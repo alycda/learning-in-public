@@ -1,6 +1,6 @@
 # Swift Bindings Workflow
 
-⚠️ **Note**: Swift bindings generate successfully but do not currently run. See [SWIFT_LIMITATIONS.md](day-01/SWIFT_LIMITATIONS.md) for details.
+⚠️ **Note**: Swift bindings generate successfully but do not currently run. See [SWIFT_LIMITATIONS.md](../day-01/docs/SWIFT_LIMITATIONS.md) for details.
 
 The Swift bindings require a special workflow due to SDK incompatibility between nix and system Swift.
 
