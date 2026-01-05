@@ -239,3 +239,111 @@ pub fn process_part2_bsearch(input: &str) -> Result<i32, String> {
         .map(|n| n * count_with_bsearch(&right, *n) as i32)
         .sum())
 }
+
+// C-style frequency map using a simple array
+// This simulates what you'd do in C with malloc/calloc
+#[repr(C)]
+struct FrequencyMap {
+    // We'll use a simple array approach: map[value] = count
+    // Assumes values are in a reasonable range (e.g., 0-100000)
+    min_val: i32,
+    max_val: i32,
+    counts: *mut i32,  // Heap-allocated array of counts
+}
+
+impl FrequencyMap {
+    // Build frequency map from array (C-style malloc + iteration)
+    unsafe fn from_array(arr: *const i32, len: usize) -> Self {
+        if len == 0 {
+            return FrequencyMap {
+                min_val: 0,
+                max_val: 0,
+                counts: std::ptr::null_mut(),
+            };
+        }
+
+        // Find min and max to determine array size needed
+        unsafe {
+            let mut min_val = *arr;
+            let mut max_val = *arr;
+            for i in 0..len {
+                let val = *arr.add(i);
+                if val < min_val { min_val = val; }
+                if val > max_val { max_val = val; }
+            }
+
+            let range = (max_val - min_val + 1) as usize;
+
+            // Allocate zeroed memory (like calloc in C)
+            let layout = std::alloc::Layout::array::<i32>(range).unwrap();
+            let counts = std::alloc::alloc_zeroed(layout) as *mut i32;
+
+            if counts.is_null() {
+                panic!("Failed to allocate memory");
+            }
+
+            // Count frequencies
+            for i in 0..len {
+                let val = *arr.add(i);
+                let idx = (val - min_val) as usize;
+                *counts.add(idx) += 1;
+            }
+
+            FrequencyMap {
+                min_val,
+                max_val,
+                counts,
+            }
+        }
+    }
+
+    // Lookup count for a value
+    unsafe fn get(&self, value: i32) -> i32 {
+        if self.counts.is_null() || value < self.min_val || value > self.max_val {
+            return 0;
+        }
+
+        unsafe {
+            let idx = (value - self.min_val) as usize;
+            *self.counts.add(idx)
+        }
+    }
+
+    // Free allocated memory (like free() in C)
+    unsafe fn free(&mut self) {
+        if !self.counts.is_null() {
+            unsafe {
+                let range = (self.max_val - self.min_val + 1) as usize;
+                let layout = std::alloc::Layout::array::<i32>(range).unwrap();
+                std::alloc::dealloc(self.counts as *mut u8, layout);
+                self.counts = std::ptr::null_mut();
+            }
+        }
+    }
+}
+
+// Wrapper that uses C-style frequency map
+fn count_with_freqmap(freq_map: &FrequencyMap, target: i32) -> i32 {
+    unsafe { freq_map.get(target) }
+}
+
+// Part 2 using C-style frequency map
+// Most efficient: O(n) to build map, O(1) lookups
+pub fn process_part2_freqmap(input: &str) -> Result<i32, String> {
+    let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
+
+    // Build frequency map from right array (simulates C malloc + counting)
+    let mut freq_map = unsafe {
+        FrequencyMap::from_array(right.as_ptr(), right.len())
+    };
+
+    let result = Ok(left
+        .iter()
+        .map(|n| n * count_with_freqmap(&freq_map, *n))
+        .sum());
+
+    // Clean up (simulates C free())
+    unsafe { freq_map.free(); }
+
+    result
+}
