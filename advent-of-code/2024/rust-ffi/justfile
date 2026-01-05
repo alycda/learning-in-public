@@ -59,15 +59,21 @@ test-kotlin: compile-kotlin
     cd bindings/kotlin && kotlinc -script ../../test_kotlin_bindings.kts -classpath "aoc_ffi_day01.jar:$CLASSPATH"
 
 # Test Swift bindings (requires swiftc)
+# NOTE: Swift tests are currently non-functional due to nix/Swift SDK incompatibility
+# See SWIFT_LIMITATIONS.md for details
 test-swift: gen-swift
-    @echo "Testing Swift bindings..."
-    @echo "Note: Requires Swift compiler (swiftc) to be installed"
-    @if [ -n "$IN_NIX_SHELL" ]; then \
-        echo "⚠️  Warning: Swift compiler requires system SDK. Please exit nix-shell and run:"; \
-        echo "   cd day-01/bindings/swift && swiftc -o test_swift ../../test_swift_bindings.swift aoc_ffi_day01.swift -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && ./test_swift"; \
-        exit 1; \
-    fi
-    cd bindings/swift && swiftc -o test_swift ../../test_swift_bindings.swift aoc_ffi_day01.swift -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && ./test_swift
+    @echo "⚠️  Swift bindings cannot be tested in this nix environment"
+    @echo ""
+    @echo "Reason: The Rust library links against nix GLib, which is incompatible"
+    @echo "        with the system Swift SDK (v6.2.1 vs nix SDK v11.3/Swift 5.4)"
+    @echo ""
+    @echo "What works:"
+    @echo "  ✅ Swift bindings generation (UniFFI creates correct Swift code)"
+    @echo "  ✅ Python bindings (test with: just test-python)"
+    @echo "  ✅ Kotlin bindings (test with: just test-kotlin)"
+    @echo ""
+    @echo "See day-01/SWIFT_LIMITATIONS.md for detailed explanation and solutions"
+    @exit 1
 
 # Generate Kotlin bindings
 gen-kotlin: build-lib
