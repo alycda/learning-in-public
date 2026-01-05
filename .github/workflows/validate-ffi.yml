@@ -131,7 +131,11 @@ jobs:
           cp target/release/libaoc_ffi_day01.${LIB_EXT} bindings/python/
 
       - name: Test Python bindings
-        run: python3 tests/python/test_python_bindings.py
+        run: |
+          # Create symlink so test can find bindings relative to itself
+          mkdir -p tests/python/bindings
+          ln -sf ../../../bindings/python tests/python/bindings/python
+          python3 tests/python/test_python_bindings.py
 
   kotlin-bindings:
     name: Test Kotlin FFI Bindings
