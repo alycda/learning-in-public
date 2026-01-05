@@ -2,7 +2,12 @@
 //!
 //! see the README for more info
 
-use day_01::{process_part1, process_part2, process_part1_c, process_part2_c, process_part2_bsearch, process_part2_freqmap, SAMPLE_INPUT};
+use day_01::{
+    process_part1, process_part2, process_part1_c, process_part2_c,
+    process_part2_bsearch, process_part2_freqmap,
+    process_part2_glibc_count, process_part2_glibc_freqmap,
+    SAMPLE_INPUT
+};
 
 fn main() {
     println!("2024 Day 1");
@@ -16,10 +21,21 @@ fn main() {
     let part2_c = process_part2_c(SAMPLE_INPUT).unwrap();
     let part2_bsearch = process_part2_bsearch(SAMPLE_INPUT).unwrap();
     let part2_freqmap = process_part2_freqmap(SAMPLE_INPUT).unwrap();
+    let part2_glibc_count = process_part2_glibc_count(SAMPLE_INPUT).unwrap();
+    let part2_glibc_freqmap = process_part2_glibc_freqmap(SAMPLE_INPUT).unwrap();
+
     assert_eq!(part2, 31);
     assert_eq!(part2_c, 31);
     assert_eq!(part2_bsearch, 31);
     assert_eq!(part2_freqmap, 31);
+    assert_eq!(part2_glibc_count, 31);
+    assert_eq!(part2_glibc_freqmap, 31);
 
-    println!("Part 2: {}/{}/{}/{}", part2, part2_c, part2_bsearch, part2_freqmap)
+    println!("Part 2:");
+    println!("  Rust:            {}", part2);
+    println!("  C-style:         {}", part2_c);
+    println!("  Binary search:   {}", part2_bsearch);
+    println!("  FreqMap (sim):   {}", part2_freqmap);
+    println!("  Real C count:    {}", part2_glibc_count);
+    println!("  Real C freqmap:  {}", part2_glibc_freqmap);
 }

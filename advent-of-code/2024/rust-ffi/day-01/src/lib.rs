@@ -347,3 +347,72 @@ pub fn process_part2_freqmap(input: &str) -> Result<i32, String> {
 
     result
 }
+
+// ============================================================================
+// Real C FFI - linking to actual compiled C code from aoc_ffi.c
+// ============================================================================
+
+// C FreqMap struct representation (must match C definition)
+#[repr(C)]
+struct CFreqMap {
+    min_val: i32,
+    max_val: i32,
+    counts: *mut i32,
+}
+
+// External C functions from our compiled library
+unsafe extern "C" {
+    // size_t count_occurrences(const int32_t *arr, size_t len, int32_t target);
+    fn count_occurrences(arr: *const i32, len: usize, target: i32) -> usize;
+
+    // FreqMap* freqmap_build(const int32_t *arr, size_t len);
+    fn freqmap_build(arr: *const i32, len: usize) -> *mut CFreqMap;
+
+    // int32_t freqmap_get(const FreqMap *map, int32_t value);
+    fn freqmap_get(map: *const CFreqMap, value: i32) -> i32;
+
+    // void freqmap_free(FreqMap *map);
+    fn freqmap_free(map: *mut CFreqMap);
+}
+
+// Part 2 using real C counting function
+pub fn process_part2_glibc_count(input: &str) -> Result<i32, String> {
+    let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
+
+    Ok(left
+        .iter()
+        .map(|n| {
+            let count = unsafe {
+                count_occurrences(right.as_ptr(), right.len(), *n)
+            };
+            n * count as i32
+        })
+        .sum())
+}
+
+// Part 2 using real C frequency map
+pub fn process_part2_glibc_freqmap(input: &str) -> Result<i32, String> {
+    let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
+
+    // Build frequency map using C
+    let freq_map = unsafe {
+        freqmap_build(right.as_ptr(), right.len())
+    };
+
+    if freq_map.is_null() {
+        return Err("Failed to build frequency map".to_string());
+    }
+
+    let result = left
+        .iter()
+        .map(|n| {
+            let count = unsafe { freqmap_get(freq_map, *n) };
+            n * count
+        })
+        .sum();
+
+    // Free the C-allocated map
+    unsafe { freqmap_free(freq_map); }
+
+    Ok(result)
+}
