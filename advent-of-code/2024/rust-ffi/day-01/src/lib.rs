@@ -112,11 +112,20 @@ pub fn solve<S: Sorter>(input: &str) -> Result<i32, String> {
 }
 
 // Shorthand function for native Rust sorting
-pub fn process(input: &str) -> Result<i32, String> {
+pub fn process_part1(input: &str) -> Result<i32, String> {
     solve::<NativeSort>(input)
 }
 
 // Shorthand function for C qsort
-pub fn process_c(input: &str) -> Result<i32, String> {
+pub fn process_part1_c(input: &str) -> Result<i32, String> {
     solve::<CSort>(input)
+}
+
+pub fn process_part2(input: &str) -> Result<i32, String> {
+    let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
+
+    Ok(left
+        .iter()
+        .map(|n| n * right.iter().filter(|&x| x==n).count() as i32)
+        .sum())
 }
