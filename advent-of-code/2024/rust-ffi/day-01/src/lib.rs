@@ -31,7 +31,7 @@ pub const SAMPLE_INPUT: &'static str = "3   4
 3   9
 3   3";
 
-// FFI declaration for libc's qsort
+// FFI declaration for libc's qsort and bsearch
 unsafe extern "C" {
     // https://www.tutorialspoint.com/c_standard_library/c_function_qsort.htm
     fn qsort(
@@ -44,6 +44,20 @@ unsafe extern "C" {
         // a function pointer to a 2-element comparison function
         compar: unsafe extern "C" fn(*const c_void, *const c_void) -> c_int
     );
+
+    // https://www.tutorialspoint.com/c_standard_library/c_function_bsearch.htm
+    fn bsearch(
+        // pointer to the key to search for
+        key: *const c_void,
+        // pointer to the first element of the sorted array
+        base: *const c_void,
+        // number of elements in the array
+        num: usize,
+        // size of each element
+        size: usize,
+        // comparison function
+        compar: unsafe extern "C" fn(*const c_void, *const c_void) -> c_int
+    ) -> *mut c_void;
 }
 
 // Comparison function for qsort (ascending order)
@@ -159,5 +173,69 @@ pub fn process_part2_c(input: &str) -> Result<i32, String> {
     Ok(left
         .iter()
         .map(|n| n * count_with_c(&right, *n) as i32)
+        .sum())
+}
+
+// Count occurrences using C's bsearch + manual counting
+// More efficient than linear scan: O(log n) search + O(k) count where k = occurrences
+unsafe fn c_bsearch_count(sorted_arr: *const i32, len: usize, target: i32) -> usize {
+    if len == 0 {
+        return 0;
+    }
+
+    // SAFETY: Caller guarantees sorted_arr points to len valid i32 elements
+    unsafe {
+        // Use bsearch to find ANY occurrence of target
+        let found = bsearch(
+            &target as *const i32 as *const c_void,
+            sorted_arr as *const c_void,
+            len,
+            std::mem::size_of::<i32>(),
+            compare_i32
+        );
+
+        // bsearch returns null if not found
+        if found.is_null() {
+            return 0;
+        }
+
+        let found_ptr = found as *const i32;
+
+        // Count backwards to find first occurrence
+        let mut first = found_ptr;
+        while first > sorted_arr && *first.offset(-1) == target {
+            first = first.offset(-1);
+        }
+
+        // Count forwards to find last occurrence
+        let end_ptr = sorted_arr.add(len);
+        let mut last = found_ptr;
+        while last < end_ptr.offset(-1) && *last.offset(1) == target {
+            last = last.offset(1);
+        }
+
+        // Calculate count: (last - first) + 1
+        (last.offset_from(first) + 1) as usize
+    }
+}
+
+// Wrapper for bsearch-based counting
+fn count_with_bsearch(sorted_vec: &[i32], target: i32) -> usize {
+    unsafe {
+        c_bsearch_count(sorted_vec.as_ptr(), sorted_vec.len(), target)
+    }
+}
+
+// Part 2 using bsearch + counting
+// This version sorts the right array first, then uses binary search
+pub fn process_part2_bsearch(input: &str) -> Result<i32, String> {
+    let (left, mut right): (Vec<i32>, Vec<i32>) = unzip(input);
+
+    // Sort right array for binary search
+    c_qsort(&mut right);
+
+    Ok(left
+        .iter()
+        .map(|n| n * count_with_bsearch(&right, *n) as i32)
         .sum())
 }
