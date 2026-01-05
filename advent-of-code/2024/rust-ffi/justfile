@@ -1,0 +1,3 @@
+[working-directory: 'day-01']
+watch:
+    bacon
