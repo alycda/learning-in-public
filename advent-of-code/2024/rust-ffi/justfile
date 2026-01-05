@@ -64,10 +64,10 @@ test-swift: gen-swift
     @echo "Note: Requires Swift compiler (swiftc) to be installed"
     @if [ -n "$IN_NIX_SHELL" ]; then \
         echo "⚠️  Warning: Swift compiler requires system SDK. Please exit nix-shell and run:"; \
-        echo "   cd day-01/bindings/swift && swiftc -o test_swift ../../test_swift_bindings.swift aoc_ffi_day01.swift -L . -laoc_ffi_day01 && ./test_swift"; \
+        echo "   cd day-01/bindings/swift && swiftc -o test_swift ../../test_swift_bindings.swift aoc_ffi_day01.swift -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && ./test_swift"; \
         exit 1; \
     fi
-    cd bindings/swift && swiftc -o test_swift ../../test_swift_bindings.swift aoc_ffi_day01.swift -L . -laoc_ffi_day01 && ./test_swift
+    cd bindings/swift && swiftc -o test_swift ../../test_swift_bindings.swift aoc_ffi_day01.swift -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && ./test_swift
 
 # Generate Kotlin bindings
 gen-kotlin: build-lib
