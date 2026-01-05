@@ -71,9 +71,12 @@ struct TestRunner {
             do {
                 let result = try function(SAMPLE_INPUT)
                 results.append(result)
-                print(String(format: "  %-25s %d", name, result))
+                // Use Swift string interpolation instead of C-style format strings
+                let paddedName = name.padding(toLength: 25, withPad: " ", startingAt: 0)
+                print("  \(paddedName) \(result)")
             } catch {
-                print(String(format: "  %-25s Error: %@", name, "\(error)"))
+                let paddedName = name.padding(toLength: 25, withPad: " ", startingAt: 0)
+                print("  \(paddedName) Error: \(error)")
                 exit(1)
             }
         }

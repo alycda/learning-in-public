@@ -117,7 +117,7 @@ test-swift-part1:
     rm -f test_part1
     @echo "✓ Swift Part 1 tests passed"
 
-# Test Swift bindings - FULL TEST (currently crashes on Part 2)
+# Test Swift bindings - FULL TEST (all implementations)
 # Run 'just gen-swift' in nix-shell FIRST to generate bindings
 test-swift:
     @echo "Testing Swift bindings (FULL TEST)..."
@@ -136,7 +136,7 @@ test-swift:
         exit 1; \
     fi
     @echo "Note: GLib-based implementation is excluded from Swift tests"
-    @echo "⚠️  WARNING: Full test currently crashes on Part 2"
+    @echo "⚠️  WARNING: Full test all implementations"
     @echo "   Use 'just test-swift-part1' for working tests"
     @echo ""
     cd bindings/swift && \
