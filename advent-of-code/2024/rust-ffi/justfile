@@ -5,3 +5,6 @@ watch:
 
 bench:
     cargo bench
+
+build:
+    cargo build --release

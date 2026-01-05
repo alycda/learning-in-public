@@ -108,7 +108,7 @@ fn unzip(input: &str) -> (Vec<i32>, Vec<i32>) {
 }
 
 // Generic process function that works with any Sorter implementation
-pub fn solve<S: Sorter>(input: &str) -> Result<i32, String> {
+pub fn solve<S: Sorter>(input: &str) -> Result<i32, AocError> {
     let (mut left, mut right): (Vec<i32>, Vec<i32>) = unzip(input);
 
     // Sort using the strategy provided by type parameter S
@@ -127,12 +127,12 @@ pub fn solve<S: Sorter>(input: &str) -> Result<i32, String> {
 }
 
 // Shorthand function for native Rust sorting
-pub fn process_part1(input: &str) -> Result<i32, String> {
+pub fn process_part1(input: &str) -> Result<i32, AocError> {
     solve::<NativeSort>(input)
 }
 
 // Shorthand function for C qsort
-pub fn process_part1_c(input: &str) -> Result<i32, String> {
+pub fn process_part1_c(input: &str) -> Result<i32, AocError> {
     solve::<CSort>(input)
 }
 
@@ -158,7 +158,7 @@ fn count_with_c(vec: &[i32], target: i32) -> usize {
     }
 }
 
-pub fn process_part2(input: &str) -> Result<i32, String> {
+pub fn process_part2(input: &str) -> Result<i32, AocError> {
     let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
 
     Ok(left
@@ -168,7 +168,7 @@ pub fn process_part2(input: &str) -> Result<i32, String> {
 }
 
 // Part 2 using C-style counting via FFI
-pub fn process_part2_c(input: &str) -> Result<i32, String> {
+pub fn process_part2_c(input: &str) -> Result<i32, AocError> {
     let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
 
     Ok(left
@@ -229,7 +229,7 @@ fn count_with_bsearch(sorted_vec: &[i32], target: i32) -> usize {
 
 // Part 2 using bsearch + counting
 // This version sorts the right array first, then uses binary search
-pub fn process_part2_bsearch(input: &str) -> Result<i32, String> {
+pub fn process_part2_bsearch(input: &str) -> Result<i32, AocError> {
     let (left, mut right): (Vec<i32>, Vec<i32>) = unzip(input);
 
     // Sort right array for binary search
@@ -330,7 +330,7 @@ fn count_with_freqmap(freq_map: &FrequencyMap, target: i32) -> i32 {
 
 // Part 2 using C-style frequency map
 // Most efficient: O(n) to build map, O(1) lookups
-pub fn process_part2_freqmap(input: &str) -> Result<i32, String> {
+pub fn process_part2_freqmap(input: &str) -> Result<i32, AocError> {
     let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
 
     // Build frequency map from right array (simulates C malloc + counting)
@@ -377,7 +377,7 @@ unsafe extern "C" {
 }
 
 // Part 2 using real C counting function
-pub fn process_part2_glibc_count(input: &str) -> Result<i32, String> {
+pub fn process_part2_glibc_count(input: &str) -> Result<i32, AocError> {
     let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
 
     Ok(left
@@ -392,7 +392,7 @@ pub fn process_part2_glibc_count(input: &str) -> Result<i32, String> {
 }
 
 // Part 2 using real C frequency map
-pub fn process_part2_glibc_freqmap(input: &str) -> Result<i32, String> {
+pub fn process_part2_glibc_freqmap(input: &str) -> Result<i32, AocError> {
     let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
 
     // Build frequency map using C
@@ -401,7 +401,7 @@ pub fn process_part2_glibc_freqmap(input: &str) -> Result<i32, String> {
     };
 
     if freq_map.is_null() {
-        return Err("Failed to build frequency map".to_string());
+        return Err(AocError::AllocationError("Failed to build frequency map".to_string()));
     }
 
     let result = left
@@ -435,7 +435,7 @@ fn libc_crate_qsort(vec: &mut Vec<i32>) {
 }
 
 // Part 1 using libc crate's qsort
-pub fn process_part1_libc(input: &str) -> Result<i32, String> {
+pub fn process_part1_libc(input: &str) -> Result<i32, AocError> {
     let (mut left, mut right): (Vec<i32>, Vec<i32>) = unzip(input);
 
     // Sort using libc crate's qsort
@@ -489,7 +489,7 @@ unsafe fn libc_crate_bsearch_count(sorted_arr: *const i32, len: usize, target: i
 }
 
 // Part 2 using libc crate's bsearch
-pub fn process_part2_libc(input: &str) -> Result<i32, String> {
+pub fn process_part2_libc(input: &str) -> Result<i32, AocError> {
     let (left, mut right): (Vec<i32>, Vec<i32>) = unzip(input);
 
     // Sort with libc's qsort
@@ -562,7 +562,7 @@ unsafe fn glib_get_freq(table: *mut glib_sys::GHashTable, value: i32) -> i32 {
 }
 
 // Part 2 using GLib's hash table
-pub fn process_part2_glib(input: &str) -> Result<i32, String> {
+pub fn process_part2_glib(input: &str) -> Result<i32, AocError> {
     let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
 
     unsafe {
@@ -602,7 +602,7 @@ unsafe extern "C" {
 }
 
 // Part 2 using uthash
-pub fn process_part2_uthash(input: &str) -> Result<i32, String> {
+pub fn process_part2_uthash(input: &str) -> Result<i32, AocError> {
     let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
 
     unsafe {
@@ -610,7 +610,7 @@ pub fn process_part2_uthash(input: &str) -> Result<i32, String> {
         let freq_table = uthash_create_freq_table(right.as_ptr(), right.len());
 
         if freq_table.is_null() {
-            return Err("Failed to create uthash table".to_string());
+            return Err(AocError::AllocationError("Failed to create uthash table".to_string()));
         }
 
         let result = left
@@ -627,3 +627,25 @@ pub fn process_part2_uthash(input: &str) -> Result<i32, String> {
         Ok(result)
     }
 }
+
+// ============================================================================
+// UniFFI bindings - exposes Rust functions to Python, Kotlin, Swift
+// ============================================================================
+
+// Error type for UniFFI - must derive specific traits
+#[derive(Debug, thiserror::Error)]
+pub enum AocError {
+    #[error("Parse error: {0}")]
+    ParseError(String),
+    #[error("Allocation error: {0}")]
+    AllocationError(String),
+}
+
+// Convert our String errors to AocError
+impl From<String> for AocError {
+    fn from(s: String) -> Self {
+        AocError::ParseError(s)
+    }
+}
+
+uniffi::include_scaffolding!("aoc_ffi_day01");
