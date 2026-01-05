@@ -1,3 +1,7 @@
-[working-directory: 'day-01']
+set working-directory := 'day-01'
+
 watch:
     bacon
+
+bench:
+    cargo bench
