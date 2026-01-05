@@ -59,17 +59,24 @@ test-kotlin: compile-kotlin
     cd bindings/kotlin && kotlinc -script ../../test_kotlin_bindings.kts -classpath "aoc_ffi_day01.jar:$CLASSPATH"
 
 # Test Swift bindings (requires swiftc, must run OUTSIDE nix-shell)
-test-swift: gen-swift
+# Run 'just gen-swift' in nix-shell FIRST to generate bindings
+test-swift:
     @echo "Testing Swift bindings..."
-    @echo "Note: Swift tests must run OUTSIDE nix-shell due to SDK compatibility"
-    @if [ -n "$IN_NIX_SHELL" ]; then \
+    @if [ -n "${IN_NIX_SHELL:-}" ]; then \
         echo ""; \
-        echo "⚠️  Error: You are currently IN nix-shell"; \
-        echo "   Please exit nix-shell first, then run:"; \
-        echo "   just test-swift"; \
+        echo "⚠️  Error: Swift tests must run OUTSIDE nix-shell"; \
+        echo "   Exit nix-shell first, then run: just test-swift"; \
         echo ""; \
         exit 1; \
     fi
+    @if [ ! -f "bindings/swift/aoc_ffi_day01.swift" ]; then \
+        echo ""; \
+        echo "⚠️  Error: Swift bindings not found"; \
+        echo "   Generate them first by running in nix-shell: just gen-swift"; \
+        echo ""; \
+        exit 1; \
+    fi
+    @echo "Note: GLib-based implementation is excluded from Swift tests"
     @echo ""
     cd bindings/swift && \
     swiftc -o test_swift ../../test_swift_bindings.swift aoc_ffi_day01.swift \
@@ -116,6 +123,10 @@ bindings-status:
     @echo "Binding generation status:"
     @echo "  Python:  $([ -d bindings/python ] && echo '✓ Generated' || echo '✗ Not generated')"
     @echo "  Kotlin:  $([ -d bindings/kotlin ] && echo '✓ Generated' || echo '✗ Not generated')"
-    @echo "  Swift:   $([ -d bindings/swift ] && echo '✓ Generated' || echo '✗ Not generated')"
+    @echo "  Swift:   $([ -d bindings/swift ] && echo '✓ Generated' || echo '✗ Not generated') (test OUTSIDE nix-shell)"
     @echo ""
-    @echo "Run 'just gen-all' to generate all bindings"
+    @echo "Generate: just gen-all (in nix-shell)"
+    @echo "Test:"
+    @echo "  Python:  just test-python (in nix-shell)"
+    @echo "  Kotlin:  just test-kotlin (in nix-shell)"
+    @echo "  Swift:   just test-swift (OUTSIDE nix-shell)"
