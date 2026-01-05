@@ -1,45 +1,4 @@
-[Error]
-enum AocError {
-  "ParseError",
-  "AllocationError",
-};
+// UniFFI interface definition for Advent of Code 2024 Day 1
+// Minimal UDL - functions defined via procedural macros in Rust
 
-namespace aoc_ffi_day01 {
-  // Part 1: Calculate sum of absolute differences between sorted lists
-  [Throws=AocError]
-  i32 process_part1(string input);
-
-  [Throws=AocError]
-  i32 process_part1_c(string input);
-
-  [Throws=AocError]
-  i32 process_part1_libc(string input);
-
-  // Part 2: Calculate similarity score
-  [Throws=AocError]
-  i32 process_part2(string input);
-
-  [Throws=AocError]
-  i32 process_part2_c(string input);
-
-  [Throws=AocError]
-  i32 process_part2_bsearch(string input);
-
-  [Throws=AocError]
-  i32 process_part2_freqmap(string input);
-
-  [Throws=AocError]
-  i32 process_part2_glibc_count(string input);
-
-  [Throws=AocError]
-  i32 process_part2_glibc_freqmap(string input);
-
-  [Throws=AocError]
-  i32 process_part2_libc(string input);
-
-  [Throws=AocError]
-  i32 process_part2_glib(string input);
-
-  [Throws=AocError]
-  i32 process_part2_uthash(string input);
-};
+namespace aoc_ffi_day01 {};

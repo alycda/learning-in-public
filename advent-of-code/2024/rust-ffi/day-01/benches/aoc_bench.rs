@@ -1,4 +1,4 @@
-use day_01::{SAMPLE_INPUT, process_part1, process_part2, process_part1_c};
+use aoc_ffi_day01::{SAMPLE_INPUT, process_part1, process_part2, process_part1_c};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 fn benchmark_process_part1_rust(c: &mut Criterion) {

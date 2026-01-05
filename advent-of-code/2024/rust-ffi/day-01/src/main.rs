@@ -2,7 +2,7 @@
 //!
 //! see the README for more info
 
-use day_01::{
+use aoc_ffi_day01::{
     process_part1, process_part2, process_part1_c, process_part2_c,
     process_part2_bsearch, process_part2_freqmap,
     process_part2_glibc_count, process_part2_glibc_freqmap,

@@ -633,7 +633,8 @@ pub fn process_part2_uthash(input: &str) -> Result<i32, AocError> {
 // ============================================================================
 
 // Error type for UniFFI - must derive specific traits
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug, thiserror::Error, uniffi::Error)]
+#[uniffi(flat_error)]
 pub enum AocError {
     #[error("Parse error: {0}")]
     ParseError(String),
@@ -646,6 +647,69 @@ impl From<String> for AocError {
     fn from(s: String) -> Self {
         AocError::ParseError(s)
     }
+}
+
+// Wrapper functions for UniFFI - these accept String instead of &str
+// and delegate to the original functions
+
+#[uniffi::export]
+pub fn uniffi_process_part1(input: String) -> Result<i32, AocError> {
+    process_part1(&input)
+}
+
+#[uniffi::export]
+pub fn uniffi_process_part1_c(input: String) -> Result<i32, AocError> {
+    process_part1_c(&input)
+}
+
+#[uniffi::export]
+pub fn uniffi_process_part1_libc(input: String) -> Result<i32, AocError> {
+    process_part1_libc(&input)
+}
+
+#[uniffi::export]
+pub fn uniffi_process_part2(input: String) -> Result<i32, AocError> {
+    process_part2(&input)
+}
+
+#[uniffi::export]
+pub fn uniffi_process_part2_c(input: String) -> Result<i32, AocError> {
+    process_part2_c(&input)
+}
+
+#[uniffi::export]
+pub fn uniffi_process_part2_bsearch(input: String) -> Result<i32, AocError> {
+    process_part2_bsearch(&input)
+}
+
+#[uniffi::export]
+pub fn uniffi_process_part2_freqmap(input: String) -> Result<i32, AocError> {
+    process_part2_freqmap(&input)
+}
+
+#[uniffi::export]
+pub fn uniffi_process_part2_glibc_count(input: String) -> Result<i32, AocError> {
+    process_part2_glibc_count(&input)
+}
+
+#[uniffi::export]
+pub fn uniffi_process_part2_glibc_freqmap(input: String) -> Result<i32, AocError> {
+    process_part2_glibc_freqmap(&input)
+}
+
+#[uniffi::export]
+pub fn uniffi_process_part2_libc(input: String) -> Result<i32, AocError> {
+    process_part2_libc(&input)
+}
+
+#[uniffi::export]
+pub fn uniffi_process_part2_glib(input: String) -> Result<i32, AocError> {
+    process_part2_glib(&input)
+}
+
+#[uniffi::export]
+pub fn uniffi_process_part2_uthash(input: String) -> Result<i32, AocError> {
+    process_part2_uthash(&input)
 }
 
 uniffi::include_scaffolding!("aoc_ffi_day01");
