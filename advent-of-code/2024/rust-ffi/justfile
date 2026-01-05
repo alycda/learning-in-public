@@ -47,6 +47,18 @@ test-python: gen-python
     @echo "Testing Python bindings..."
     python3 test_python_bindings.py
 
+# Test Kotlin bindings (requires kotlinc)
+test-kotlin: gen-kotlin
+    @echo "Testing Kotlin bindings..."
+    @echo "Note: Requires Kotlin compiler (kotlinc) to be installed"
+    cd bindings/kotlin && kotlinc -script ../../test_kotlin_bindings.kts -classpath .
+
+# Test Swift bindings (requires swiftc)
+test-swift: gen-swift
+    @echo "Testing Swift bindings..."
+    @echo "Note: Requires Swift compiler (swiftc) to be installed"
+    cd bindings/swift && swiftc -o test_swift ../../test_swift_bindings.swift aoc_ffi_day01.swift -L . -laoc_ffi_day01 && ./test_swift
+
 # Generate Kotlin bindings
 gen-kotlin: build-lib
     @echo "Generating Kotlin bindings..."

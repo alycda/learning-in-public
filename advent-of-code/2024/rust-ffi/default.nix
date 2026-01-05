@@ -13,6 +13,10 @@ pkgs.mkShell {
     python3
     python3Packages.pip
     python3Packages.virtualenv
+    # Kotlin for testing Kotlin bindings
+    kotlin
+    # Swift for testing Swift bindings (macOS has built-in Swift)
+    # swift is available on macOS by default
   ];
 
   shellHook = ''
@@ -36,5 +40,7 @@ pkgs.mkShell {
     echo "  - Rust toolchain with FFI support"
     echo "  - C dependencies (pkg-config, glib)"
     echo "  - Python with uniffi-bindgen for language bindings"
+    echo "  - Kotlin compiler for testing Kotlin bindings"
+    echo "  - Swift compiler available (system default on macOS)"
   '';
 }
