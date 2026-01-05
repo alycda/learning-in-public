@@ -1,3 +1,57 @@
+# Advent of Code 2024 - Day 1: FFI Learning Project
+
+This project demonstrates various FFI (Foreign Function Interface) techniques in Rust, from basic C stdlib functions to external C libraries.
+
+## Building
+
+### With Nix (Recommended)
+
+From the `rust-ffi` directory:
+```bash
+nix-shell
+cd day-01
+cargo build
+cargo run
+```
+
+### Without Nix
+
+You'll need:
+- Rust toolchain
+- `pkg-config` (for GLib)
+- GLib development files
+
+On macOS:
+```bash
+brew install pkg-config glib
+```
+
+On Linux (Debian/Ubuntu):
+```bash
+sudo apt install pkg-config libglib2.0-dev
+```
+
+Then:
+```bash
+cargo build
+cargo run
+```
+
+## FFI Approaches Demonstrated
+
+This project shows 8+ different ways to interact with C code from Rust:
+
+1. **Manual FFI declarations** - Writing `extern "C"` blocks yourself
+2. **libc crate** - Using pre-made bindings to C standard library
+3. **glib-sys crate** - Using pre-made bindings to GLib (GNOME C library)
+4. **Custom C code** - Compiling and linking your own C files
+5. **C qsort** - Function pointers and callbacks
+6. **C bsearch** - Binary search with pointer arithmetic
+7. **C malloc/free** - Manual memory management across FFI boundary
+8. **GLib GHashTable** - Using external C library data structures
+
+---
+
 ### Why qsort needs a comparison function:
 
 1. **C doesn't have generics or type information at runtime** - `qsort` receives a `void*` (just raw bytes). It has no idea what those bytes mean. Are they integers? Floats? Strings? Structs?

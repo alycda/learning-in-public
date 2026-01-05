@@ -3,9 +3,12 @@
 pkgs.mkShell {
   buildInputs = with pkgs; [
     rustup
-    justfile
+    just
     bacon
     presenterm
+    # FFI dependencies
+    pkg-config
+    glib
   ];
 
   shellHook = ''

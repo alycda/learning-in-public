@@ -505,3 +505,81 @@ pub fn process_part2_libc(input: &str) -> Result<i32, String> {
         })
         .sum())
 }
+
+// ============================================================================
+// Using glib-sys - GLib hash table for frequency counting
+// ============================================================================
+
+use glib_sys::{
+    g_hash_table_new, g_hash_table_destroy, g_hash_table_insert,
+    g_hash_table_lookup, g_direct_hash, g_direct_equal, gpointer
+};
+
+// Build frequency map using GLib's GHashTable
+// GHashTable is GLib's hash map implementation (similar to HashMap in Rust)
+unsafe fn glib_build_freq_map(arr: &[i32]) -> *mut glib_sys::GHashTable {
+    unsafe {
+        // Create hash table with direct hash (for integer keys stored as pointers)
+        let table = g_hash_table_new(
+            Some(g_direct_hash),    // hash function for integer keys
+            Some(g_direct_equal)     // equality function for integer keys
+        );
+
+        // Count frequencies
+        for &value in arr {
+            // GLib stores keys/values as void pointers (gpointer)
+            let key = value as gpointer;
+
+            // Look up current count (stored as pointer)
+            let current = g_hash_table_lookup(table, key);
+            let count = if current.is_null() {
+                0
+            } else {
+                current as isize
+            };
+
+            // Store incremented count
+            let new_count = (count + 1) as gpointer;
+            g_hash_table_insert(table, key, new_count);
+        }
+
+        table
+    }
+}
+
+// Lookup frequency in GHashTable
+unsafe fn glib_get_freq(table: *mut glib_sys::GHashTable, value: i32) -> i32 {
+    unsafe {
+        let key = value as gpointer;
+        let result = g_hash_table_lookup(table, key);
+
+        if result.is_null() {
+            0
+        } else {
+            result as i32
+        }
+    }
+}
+
+// Part 2 using GLib's hash table
+pub fn process_part2_glib(input: &str) -> Result<i32, String> {
+    let (left, right): (Vec<i32>, Vec<i32>) = unzip(input);
+
+    unsafe {
+        // Build frequency map using GLib
+        let freq_table = glib_build_freq_map(&right);
+
+        let result = left
+            .iter()
+            .map(|n| {
+                let count = glib_get_freq(freq_table, *n);
+                n * count
+            })
+            .sum();
+
+        // Clean up GLib hash table
+        g_hash_table_destroy(freq_table);
+
+        Ok(result)
+    }
+}
