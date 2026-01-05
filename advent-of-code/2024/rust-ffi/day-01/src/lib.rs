@@ -93,7 +93,7 @@ fn unzip(input: &str) -> (Vec<i32>, Vec<i32>) {
 }
 
 // Generic process function that works with any Sorter implementation
-pub fn process<S: Sorter>(input: &str) -> Result<i32, String> {
+pub fn solve<S: Sorter>(input: &str) -> Result<i32, String> {
     let (mut left, mut right): (Vec<i32>, Vec<i32>) = unzip(input);
 
     // Sort using the strategy provided by type parameter S
@@ -109,4 +109,14 @@ pub fn process<S: Sorter>(input: &str) -> Result<i32, String> {
         // and sum
         .sum::<i32>()
     )
+}
+
+// Shorthand function for native Rust sorting
+pub fn process(input: &str) -> Result<i32, String> {
+    solve::<NativeSort>(input)
+}
+
+// Shorthand function for C qsort
+pub fn process_c(input: &str) -> Result<i32, String> {
+    solve::<CSort>(input)
 }
