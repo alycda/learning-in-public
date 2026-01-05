@@ -1,6 +1,29 @@
 use std::ffi::c_void;
 use std::os::raw::c_int;
 
+// Trait for different sorting strategies
+pub trait Sorter {
+    fn sort(vec: &mut Vec<i32>);
+}
+
+// Marker type for native Rust sorting
+pub struct NativeSort;
+
+impl Sorter for NativeSort {
+    fn sort(vec: &mut Vec<i32>) {
+        vec.sort();
+    }
+}
+
+// Marker type for C qsort
+pub struct CSort;
+
+impl Sorter for CSort {
+    fn sort(vec: &mut Vec<i32>) {
+        c_qsort(vec);
+    }
+}
+
 pub const SAMPLE_INPUT: &'static str = "3   4
 4   3
 2   5
@@ -69,30 +92,13 @@ fn unzip(input: &str) -> (Vec<i32>, Vec<i32>) {
         .unzip()
 }
 
-pub fn process_c(input: &str) -> Result<i32, String> { 
+// Generic process function that works with any Sorter implementation
+pub fn process<S: Sorter>(input: &str) -> Result<i32, String> {
     let (mut left, mut right): (Vec<i32>, Vec<i32>) = unzip(input);
 
-    // use C qsort instead of Rust's stable_sort (timsort)
-    c_qsort(&mut left);
-    c_qsort(&mut right);
-
-    Ok(left
-        .iter()
-        // for each element
-        .zip(right.iter())
-        // get the absolute difference
-        .map(|(l, r)| (l-r).abs())
-        // and sum
-        .sum::<i32>()
-    )
-}
-
-pub fn process_rust(input: &str) -> Result<i32, String> { 
-    let (mut left, mut right): (Vec<i32>, Vec<i32>) = unzip(input);
-
-    // critical: sort both lists
-    left.sort();
-    right.sort();
+    // Sort using the strategy provided by type parameter S
+    S::sort(&mut left);
+    S::sort(&mut right);
 
     Ok(left
         .iter()
