@@ -100,6 +100,8 @@ jobs:
           toolchain: stable
 
       - name: Install uniffi-bindgen
+        env:
+          RUSTFLAGS: ""
         run: |
           cargo install --git https://github.com/mozilla/uniffi-rs --tag v0.28.3 --bin uniffi-bindgen \
             --root ~/.cargo uniffi-bindgen-cli
@@ -174,6 +176,8 @@ jobs:
           toolchain: stable
 
       - name: Install uniffi-bindgen
+        env:
+          RUSTFLAGS: ""
         run: |
           cargo install --git https://github.com/mozilla/uniffi-rs --tag v0.28.3 --bin uniffi-bindgen \
             --root ~/.cargo uniffi-bindgen-cli
@@ -230,6 +234,8 @@ jobs:
           toolchain: stable
 
       - name: Install uniffi-bindgen
+        env:
+          RUSTFLAGS: ""
         run: |
           cargo install --git https://github.com/mozilla/uniffi-rs --tag v0.28.3 --bin uniffi-bindgen \
             --root ~/.cargo uniffi-bindgen-cli
