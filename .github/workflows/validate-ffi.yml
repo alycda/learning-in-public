@@ -1,0 +1,308 @@
+name: Validate FFI Bindings
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  rust-build:
+    name: Build Rust Library
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    defaults:
+      run:
+        working-directory: advent-of-code/2024/rust-ffi/day-01
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            advent-of-code/2024/rust-ffi/day-01/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build Rust library (with GLib)
+        run: cargo build --release --lib
+
+      - name: Build Rust library (without GLib for Swift)
+        run: cargo build --release --lib --no-default-features
+
+      - name: Run Rust tests
+        run: cargo test --release
+
+      - name: Upload library artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rust-lib-${{ matrix.os }}
+          path: |
+            advent-of-code/2024/rust-ffi/day-01/target/release/*.so
+            advent-of-code/2024/rust-ffi/day-01/target/release/*.dylib
+            advent-of-code/2024/rust-ffi/day-01/target/release/*.dll
+          if-no-files-found: ignore
+
+  python-bindings:
+    name: Test Python FFI Bindings
+    needs: rust-build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+
+    defaults:
+      run:
+        working-directory: advent-of-code/2024/rust-ffi/day-01
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Install uniffi-bindgen
+        env:
+          RUSTFLAGS: ""
+        run: |
+          cargo install --git https://github.com/mozilla/uniffi-rs --tag v0.28.3 --bin uniffi-bindgen \
+            --root ~/.cargo uniffi-bindgen-cli
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            advent-of-code/2024/rust-ffi/day-01/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build Rust library
+        run: cargo build --release --lib
+
+      - name: Generate Python bindings
+        run: |
+          mkdir -p bindings/python
+          LIB_EXT="${{ runner.os == 'Linux' && 'so' || 'dylib' }}"
+          uniffi-bindgen generate src/aoc_ffi_day01.udl \
+            --lib-file target/release/libaoc_ffi_day01.${LIB_EXT} \
+            --language python \
+            --out-dir bindings/python
+          cp target/release/libaoc_ffi_day01.${LIB_EXT} bindings/python/
+
+      - name: Test Python bindings
+        run: |
+          # Create symlink so test can find bindings relative to itself
+          mkdir -p tests/python/bindings
+          ln -sf ../../../bindings/python tests/python/bindings/python
+          python3 tests/python/test_python_bindings.py
+
+  kotlin-bindings:
+    name: Test Kotlin FFI Bindings
+    needs: rust-build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    defaults:
+      run:
+        working-directory: advent-of-code/2024/rust-ffi/day-01
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies (Ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglib2.0-dev
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install Kotlin compiler
+        run: |
+          if [ "${{ runner.os }}" == "Linux" ]; then
+            curl -s https://get.sdkman.io | bash
+            source "$HOME/.sdkman/bin/sdkman-init.sh"
+            sdk install kotlin
+          else
+            brew install kotlin
+          fi
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Install uniffi-bindgen
+        env:
+          RUSTFLAGS: ""
+        run: |
+          cargo install --git https://github.com/mozilla/uniffi-rs --tag v0.28.3 --bin uniffi-bindgen \
+            --root ~/.cargo uniffi-bindgen-cli
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            advent-of-code/2024/rust-ffi/day-01/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build Rust library
+        run: cargo build --release --lib
+
+      - name: Download JNA library
+        run: |
+          mkdir -p bindings/kotlin/lib
+          curl -L -o bindings/kotlin/lib/jna.jar https://repo1.maven.org/maven2/net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar
+
+      - name: Generate Kotlin bindings
+        run: |
+          mkdir -p bindings/kotlin
+          LIB_EXT="${{ runner.os == 'Linux' && 'so' || 'dylib' }}"
+          uniffi-bindgen generate src/aoc_ffi_day01.udl \
+            --lib-file target/release/libaoc_ffi_day01.${LIB_EXT} \
+            --language kotlin \
+            --out-dir bindings/kotlin
+          cp target/release/libaoc_ffi_day01.${LIB_EXT} bindings/kotlin/
+
+      - name: Compile Kotlin bindings
+        run: |
+          cd bindings/kotlin
+          kotlinc uniffi/aoc_ffi_day01/aoc_ffi_day01.kt -include-runtime -d aoc_ffi_day01.jar \
+            -classpath lib/jna.jar
+
+      - name: Test Kotlin bindings
+        run: |
+          cd bindings/kotlin
+          kotlinc -script ../../tests/kotlin/test_kotlin_bindings.kts -classpath "aoc_ffi_day01.jar:lib/jna.jar:$CLASSPATH"
+
+  swift-bindings:
+    name: Test Swift FFI Bindings
+    needs: rust-build
+    runs-on: macos-latest
+
+    defaults:
+      run:
+        working-directory: advent-of-code/2024/rust-ffi/day-01
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Install uniffi-bindgen
+        env:
+          RUSTFLAGS: ""
+        run: |
+          cargo install --git https://github.com/mozilla/uniffi-rs --tag v0.28.3 --bin uniffi-bindgen \
+            --root ~/.cargo uniffi-bindgen-cli
+
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            advent-of-code/2024/rust-ffi/day-01/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build Rust library (without GLib for Swift)
+        run: cargo build --release --lib --no-default-features
+
+      - name: Generate Swift bindings
+        run: |
+          mkdir -p bindings/swift
+          uniffi-bindgen generate src/aoc_ffi_day01.udl \
+            --lib-file target/release/libaoc_ffi_day01.dylib \
+            --language swift \
+            --out-dir bindings/swift
+          cp target/release/libaoc_ffi_day01.dylib bindings/swift/
+
+      - name: Test Swift simple functions
+        run: |
+          cd bindings/swift
+          swiftc -o test_simple ../../tests/swift/test_swift_simple.swift aoc_ffi_day01.swift \
+            -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01
+          DYLD_LIBRARY_PATH=. ./test_simple
+
+      - name: Test Swift Result functions
+        run: |
+          cd bindings/swift
+          swiftc -o test_result ../../tests/swift/test_swift_result.swift aoc_ffi_day01.swift \
+            -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01
+          DYLD_LIBRARY_PATH=. ./test_result
+
+      - name: Test Swift Part 1 implementations
+        run: |
+          cd bindings/swift
+          swiftc -o test_part1 ../../tests/swift/test_swift_part1.swift aoc_ffi_day01.swift \
+            -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01
+          DYLD_LIBRARY_PATH=. ./test_part1
+
+  validate-all:
+    name: All FFI Validations Passed
+    needs: [rust-build, python-bindings, kotlin-bindings, swift-bindings]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summary
+        run: |
+          echo "All FFI binding validations completed successfully!"
+          echo "- Rust library: Built and tested"
+          echo "- Python bindings: Generated and tested"
+          echo "- Kotlin bindings: Generated and tested"
+          echo "- Swift bindings: Generated and tested"

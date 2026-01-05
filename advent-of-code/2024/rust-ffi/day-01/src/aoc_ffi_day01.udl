@@ -1,0 +1,4 @@
+// UniFFI interface definition for Advent of Code 2024 Day 1
+// Minimal UDL - functions defined via procedural macros in Rust
+
+namespace aoc_ffi_day01 {};

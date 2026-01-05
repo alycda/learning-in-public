@@ -1,0 +1,183 @@
+set working-directory := 'day-01'
+
+# Default recipe - show available commands
+default:
+    @just --list
+
+# Watch and rebuild on changes
+watch:
+    bacon
+
+# Show the FFI learning presentation (requires presenterm in nix-shell)
+present:
+    #!/usr/bin/env bash
+    cd ..
+    if [ -n "${IN_NIX_SHELL:-}" ]; then
+        presenterm ffi-learning-presentation.md
+    else
+        echo "Note: Running outside nix-shell, using system presenterm if available"
+        if command -v presenterm &> /dev/null; then
+            presenterm ffi-learning-presentation.md
+        else
+            echo "Error: presenterm not found."
+            echo "Please run: nix-shell --run 'just present'"
+            exit 1
+        fi
+    fi
+
+# Run benchmarks
+bench:
+    cargo bench
+
+# Build Rust library
+build:
+    cargo build --release
+
+# Build library only (no binary)
+build-lib:
+    cargo build --release --lib
+
+# Run the Rust binary (tests all FFI implementations)
+run:
+    cargo run --release
+
+# Clean build artifacts
+clean:
+    cargo clean
+    rm -rf bindings/
+
+# === UniFFI Bindings ===
+
+# Generate Python bindings
+gen-python: build-lib
+    @echo "Generating Python bindings..."
+    @mkdir -p bindings/python
+    uniffi-bindgen generate src/aoc_ffi_day01.udl \
+        --lib-file target/release/libaoc_ffi_day01.dylib \
+        --language python \
+        --out-dir bindings/python
+    @cp target/release/libaoc_ffi_day01.dylib bindings/python/
+    @echo "✓ Python bindings generated in bindings/python/"
+
+# Test Python bindings
+test-python: gen-python
+    @echo "Testing Python bindings..."
+    python3 tests/python/test_python_bindings.py
+
+# Compile Kotlin bindings into JAR
+compile-kotlin: gen-kotlin
+    @echo "Compiling Kotlin bindings..."
+    cd bindings/kotlin && kotlinc uniffi/aoc_ffi_day01/aoc_ffi_day01.kt -include-runtime -d aoc_ffi_day01.jar -classpath "$CLASSPATH"
+
+# Test Kotlin bindings (requires kotlinc and JNA)
+test-kotlin: compile-kotlin
+    @echo "Testing Kotlin bindings..."
+    @echo "Note: Requires Kotlin compiler (kotlinc) and JNA library"
+    cd bindings/kotlin && kotlinc -script ../../tests/kotlin/test_kotlin_bindings.kts -classpath "aoc_ffi_day01.jar:$CLASSPATH"
+
+# Test Swift bindings - simple functions (no Result)
+test-swift-simple:
+    @echo "Testing Swift simple functions..."
+    @if [ ! -f "bindings/swift/aoc_ffi_day01.swift" ]; then \
+        echo "⚠️  Error: Swift bindings not found. Run 'just gen-swift' in nix-shell first."; \
+        exit 1; \
+    fi
+    cd bindings/swift && \
+    env -u SDKROOT -u DEVELOPER_DIR swiftc -o test_simple ../../tests/swift/test_swift_simple.swift aoc_ffi_day01.swift \
+        -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && \
+    DYLD_LIBRARY_PATH=. ./test_simple && \
+    rm -f test_simple
+    @echo "✓ Swift simple tests passed"
+
+# Test Swift bindings - Result-returning functions
+test-swift-result:
+    @echo "Testing Swift Result functions..."
+    @if [ ! -f "bindings/swift/aoc_ffi_day01.swift" ]; then \
+        echo "⚠️  Error: Swift bindings not found. Run 'just gen-swift' in nix-shell first."; \
+        exit 1; \
+    fi
+    cd bindings/swift && \
+    env -u SDKROOT -u DEVELOPER_DIR swiftc -o test_result ../../tests/swift/test_swift_result.swift aoc_ffi_day01.swift \
+        -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && \
+    DYLD_LIBRARY_PATH=. ./test_result && \
+    rm -f test_result
+    @echo "✓ Swift Result tests passed"
+
+# Test Swift bindings - Part 1 implementations
+test-swift-part1:
+    @echo "Testing Swift Part 1 implementations..."
+    @if [ ! -f "bindings/swift/aoc_ffi_day01.swift" ]; then \
+        echo "⚠️  Error: Swift bindings not found. Run 'just gen-swift' in nix-shell first."; \
+        exit 1; \
+    fi
+    cd bindings/swift && \
+    env -u SDKROOT -u DEVELOPER_DIR swiftc -o test_part1 ../../tests/swift/test_swift_part1.swift aoc_ffi_day01.swift \
+        -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && \
+    DYLD_LIBRARY_PATH=. ./test_part1 && \
+    rm -f test_part1
+    @echo "✓ Swift Part 1 tests passed"
+
+# Test Swift bindings - FULL TEST (all implementations)
+# Run 'just gen-swift' in nix-shell FIRST to generate bindings
+test-swift:
+    @echo "Testing Swift bindings (FULL TEST)..."
+    @if [ ! -f "bindings/swift/aoc_ffi_day01.swift" ]; then \
+        echo ""; \
+        echo "⚠️  Error: Swift bindings not found"; \
+        echo "   Generate them first by running in nix-shell: just gen-swift"; \
+        echo ""; \
+        exit 1; \
+    fi
+    @echo "Note: GLib-based implementation is excluded from Swift tests"
+    cd bindings/swift && \
+    env -u SDKROOT -u DEVELOPER_DIR swiftc -o test_swift ../../tests/swift/test_swift_bindings.swift aoc_ffi_day01.swift \
+        -import-objc-header aoc_ffi_day01FFI.h -L . -laoc_ffi_day01 && \
+    DYLD_LIBRARY_PATH=. ./test_swift && \
+    rm -f test_swift
+    @echo ""
+    @echo "✓ Swift tests completed"
+
+# Generate Kotlin bindings
+gen-kotlin: build-lib
+    @echo "Generating Kotlin bindings..."
+    @mkdir -p bindings/kotlin
+    uniffi-bindgen generate src/aoc_ffi_day01.udl \
+        --lib-file target/release/libaoc_ffi_day01.dylib \
+        --language kotlin \
+        --out-dir bindings/kotlin
+    @cp target/release/libaoc_ffi_day01.dylib bindings/kotlin/
+    @echo "✓ Kotlin bindings generated in bindings/kotlin/"
+
+# Build library without GLib (for Swift compatibility)
+build-no-glib:
+    @echo "Building library without GLib (for Swift)..."
+    cargo build --release --lib --no-default-features
+
+# Generate Swift bindings
+gen-swift: build-no-glib
+    @echo "Generating Swift bindings..."
+    @mkdir -p bindings/swift
+    uniffi-bindgen generate src/aoc_ffi_day01.udl \
+        --lib-file target/release/libaoc_ffi_day01.dylib \
+        --language swift \
+        --out-dir bindings/swift
+    @cp target/release/libaoc_ffi_day01.dylib bindings/swift/
+    @echo "✓ Swift bindings generated in bindings/swift/"
+    @echo "Note: GLib-based implementation (process_part2_glib) is unavailable"
+
+# Generate all language bindings
+gen-all: gen-python gen-kotlin gen-swift
+    @echo "✓ All bindings generated!"
+
+# Show binding generation status
+bindings-status:
+    @echo "Binding generation status:"
+    @echo "  Python:  $([ -d bindings/python ] && echo '✓ Generated' || echo '✗ Not generated')"
+    @echo "  Kotlin:  $([ -d bindings/kotlin ] && echo '✓ Generated' || echo '✗ Not generated')"
+    @echo "  Swift:   $([ -d bindings/swift ] && echo '✓ Generated' || echo '✗ Not generated') (test OUTSIDE nix-shell)"
+    @echo ""
+    @echo "Generate: just gen-all (in nix-shell)"
+    @echo "Test:"
+    @echo "  Python:  just test-python (in nix-shell)"
+    @echo "  Kotlin:  just test-kotlin (in nix-shell)"
+    @echo "  Swift:   just test-swift (OUTSIDE nix-shell)"
